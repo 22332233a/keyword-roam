@@ -176,12 +176,12 @@ function renderCenter(word, tag) {
   const w = esc(word).replace(/'/g, "\\'");
   document.getElementById("center").innerHTML =
     `${esc(word)}
+     <small>${tag}</small>
      <div class="center-actions">
        <button class="deep-btn lg" onclick="roamDeep('${w}')">🔍深挖</button>
        <button class="deep-btn lg" onclick="toggleDetail(this, '${w}')">📖详情</button>
      </div>
-     <div class="detail-box" id="center-detail" hidden></div>
-     <small>${tag}</small>`;
+     <div class="detail-box" id="center-detail" hidden></div>`;
 }
 
 /* 普通漫游:固定三栏 */

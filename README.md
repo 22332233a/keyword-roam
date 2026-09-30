@@ -46,6 +46,7 @@ python app.py
 | `DEEPSEEK_MODEL` | `deepseek-flash` | 另有 `deepseek-v4-pro`(更聪明更贵);可用模型以 `curl api.deepseek.com/models` 实测为准 |
 | `LLM_BASE_URL` | `https://api.deepseek.com` | **万能插座**:任何 OpenAI 兼容端点都能接,比如 Ollama 填 `http://localhost:11434/v1` |
 | `ROAM_PORT` | `8765` | 端口被占时换一个 |
+| `ROAM_MAX_TOKENS` | `8000` | 思维链+正文共用预算;大词(如微软)思考就要两千 token,报"解析失败"可再调大 |
 
 **本地模型提示**:Ollama/LM Studio 等都讲 OpenAI 兼容协议,填 `LLM_BASE_URL` 即接。但 JSON 输出
 的可靠性随模型规模下降,建议 30B 级别以上;小模型偶发返回断 JSON,后端的兜底解析器能救一部分。

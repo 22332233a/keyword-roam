@@ -3617,8 +3617,289 @@
  },
  "微软": {
   "word": "微软",
-  "time": 1790757522,
-  "detail": "1975年比尔·盖茨和保罗·艾伦创办，Windows和Office像收过路费，撑起PC时代。1998年因捆绑IE被司法部告垄断。错过手机后靠云服务Azure翻身，2019年起重金投资OpenAI，把Copilot塞进Office，市值重回顶峰——老巨头用新叙事续命的标本。"
+  "parents": [
+   {
+    "word": "个人电脑时代",
+    "note": "微软靠它登上王座"
+   },
+   {
+    "word": "科技巨头",
+    "note": "与苹果谷歌同列的巨头格局"
+   },
+   {
+    "word": "软件产业",
+    "note": "卖授权这套玩法由它奠定"
+   }
+  ],
+  "children": [
+   {
+    "word": "Windows 95",
+    "note": "排队抢购系统的疯狂一夜"
+   },
+   {
+    "word": "Office 办公套件",
+    "note": "Word和Excel统治了整个职场"
+   },
+   {
+    "word": "Xbox",
+    "note": "烧钱二十年才挤进客厅"
+   },
+   {
+    "word": "微软亚洲研究院",
+    "note": "中国AI人才的黄埔军校"
+   },
+   {
+    "word": "史蒂夫·鲍尔默",
+    "note": "高喊Developers的疯狂舞台"
+   },
+   {
+    "word": "萨提亚·纳德拉",
+    "note": "一句话让微软重回巅峰"
+   },
+   {
+    "word": "蓝屏死机",
+    "note": "全球最著名的报错画面"
+   },
+   {
+    "word": "浏览器大战",
+    "note": "看网景是怎么被按死的"
+   }
+  ],
+  "similar": [
+   {
+    "word": "比尔·盖茨",
+    "note": "辍学生到首富的完整剧本"
+   },
+   {
+    "word": "苹果公司",
+    "note": "和微软相爱相杀四十年"
+   },
+   {
+    "word": "美国诉微软反垄断案",
+    "note": "差点被拆分的世纪官司"
+   },
+   {
+    "word": "网景",
+    "note": "浏览器大战里的悲情输家"
+   },
+   {
+    "word": "IBM",
+    "note": "当年的甲方被学生反杀"
+   },
+   {
+    "word": "硅谷",
+    "note": "太平洋对岸的老冤家"
+   },
+   {
+    "word": "番茄花园",
+    "note": "国产盗版系统的时代记忆"
+   },
+   {
+    "word": "Windows XP 开机音",
+    "note": "一个音效唤醒一代人"
+   },
+   {
+    "word": "扫雷",
+    "note": "藏在系统里的童年黑洞"
+   },
+   {
+    "word": "施乐帕克研究中心",
+    "note": "图形界面真正的原创者"
+   },
+   {
+    "word": "盖茨基金会",
+    "note": "首富后半场在非洲打疟疾"
+   },
+   {
+    "word": "开源软件运动",
+    "note": "头号公敌如何完成转身"
+   }
+  ],
+  "flavor": "半学习半娱乐,科技/商业/历史/人文乱炖,别太正经",
+  "time": 1790757933,
+  "detail": "1975年比尔·盖茨和保罗·艾伦创办，Windows和Office像收过路费，撑起PC时代。1998年因捆绑IE被司法部告垄断。错过手机后靠云服务Azure翻身，2019年起重金投资OpenAI，把Copilot塞进Office，市值重回顶峰——老巨头用新叙事续命的标本。",
+  "deep": {
+   "type": "组织",
+   "summary": "从MS-DOS到云端的软件帝国",
+   "dimensions": [
+    {
+     "name": "关键人物",
+     "items": [
+      {
+       "word": "比尔·盖茨",
+       "note": "辍学创业，霸榜首富多年"
+      },
+      {
+       "word": "保罗·艾伦",
+       "note": "说服盖茨一起写BASIC"
+      },
+      {
+       "word": "史蒂夫·鲍尔默",
+       "note": "咆哮式CEO，错失移动"
+      },
+      {
+       "word": "萨提亚·纳德拉",
+       "note": "云优先，让微软重回巅峰"
+      },
+      {
+       "word": "沈向洋",
+       "note": "微软AI掌门，华人学者"
+      },
+      {
+       "word": "李开复",
+       "note": "微软亚洲研究院首任院长"
+      }
+     ]
+    },
+    {
+     "name": "产品谱系",
+     "items": [
+      {
+       "word": "Windows 95",
+       "note": "开机音乐成一代人记忆"
+      },
+      {
+       "word": "MS-DOS",
+       "note": "微软起家，借IBM起飞"
+      },
+      {
+       "word": "Microsoft Office",
+       "note": "全球最赚钱的办公套件"
+      },
+      {
+       "word": "Xbox",
+       "note": "烧钱砸开主机市场"
+      },
+      {
+       "word": "Visual Studio Code",
+       "note": "意外统治程序员编辑器"
+      },
+      {
+       "word": "微软模拟飞行",
+       "note": "老牌硬核飞行模拟"
+      }
+     ]
+    },
+    {
+     "name": "关键时刻",
+     "items": [
+      {
+       "word": "Altair BASIC",
+       "note": "微软的第一桶金"
+      },
+      {
+       "word": "IBM PC",
+       "note": "微软命运的转折点"
+      },
+      {
+       "word": "浏览器大战",
+       "note": "IE与网景的生死斗"
+      },
+      {
+       "word": "美国诉微软案",
+       "note": "差点把微软拆了的官司"
+      },
+      {
+       "word": "收购诺基亚",
+       "note": "移动梦碎，留下烂摊子"
+      },
+      {
+       "word": "收购动视暴雪",
+       "note": "687亿美元买游戏公司"
+      }
+     ]
+    },
+    {
+     "name": "组织与文化",
+     "items": [
+      {
+       "word": "微软亚洲研究院",
+       "note": "中国AI的黄埔军校"
+      },
+      {
+       "word": "微软研究院",
+       "note": "论文工厂还是象牙塔"
+      },
+      {
+       "word": "成长型思维",
+       "note": "纳德拉挂在嘴边的词"
+      },
+      {
+       "word": "绩效排名",
+       "note": "内部内卷的老梗"
+      },
+      {
+       "word": "GitHub",
+       "note": "微软买下程序员的家"
+      },
+      {
+       "word": "领英",
+       "note": "职业社交的关键拼图"
+      }
+     ]
+    },
+    {
+     "name": "争议与黑历史",
+     "items": [
+      {
+       "word": "蓝屏死机",
+       "note": "全球一起看蓝屏"
+      },
+      {
+       "word": "番茄花园",
+       "note": "盗版XP被连根拔起"
+      },
+      {
+       "word": "黑屏事件",
+       "note": "微软对盗版下狠手"
+      },
+      {
+       "word": "Windows Vista",
+       "note": "被骂到下架的系统"
+      },
+      {
+       "word": "捆绑销售",
+       "note": "IE绑进Windows的根源"
+      },
+      {
+       "word": "Windows强制更新",
+       "note": "关机前被迫装系统"
+      }
+     ]
+    },
+    {
+     "name": "桌面彩蛋与周边",
+     "items": [
+      {
+       "word": "比尔及梅琳达·盖茨基金会",
+       "note": "花钱比赚钱还难"
+      },
+      {
+       "word": "Windows开机音",
+       "note": "布莱恩·伊诺写的5秒"
+      },
+      {
+       "word": "微软中国",
+       "note": "落地三十年的江湖"
+      },
+      {
+       "word": "帝国时代",
+       "note": "微软自家出的RTS"
+      },
+      {
+       "word": "微软纸牌",
+       "note": "摸鱼神器，练鼠标"
+      },
+      {
+       "word": "扫雷",
+       "note": "教会一代人点鼠标"
+      }
+     ]
+    }
+   ],
+   "thinking": "The user wants a JSON deep-dive on \"微软\" (Microsoft). Type: 组织 (company). Need 4-6 dimensions, each 3-6 items, each with a note ≤15 chars. Avoid the already-visited list (which includes 微软 — but it's the keyword itself, so fine; avoid recommending 微软 again as an item... actually the keyword is the seed, so probably shouldn't include it as an item. Avoid: 数字鸿沟、算法推荐、谷歌、AI、AI泡沫、英伟达、提示词工程、算力、她、专家系统、达特茅斯会议、中文房间、黄仁勋、大语言模型、DeepSeek、OpenAI、AGI、通义千问、杰弗里·辛顿、Claude、Gemini、达里奥·阿莫代伊、宪法AI、越狱、AI暂停公开信、可解释性、阿曼达·阿斯克尔、红队测试、模型卡、Llama Guard、安全派与加速派、Anthropic、gork、Grok 4、火车站、黑客、对齐问题、纽约时报诉 OpenAI、微软、斗转星移.\n\nSo avoid OpenAI, 英伟达, 谷歌, Anthropic, 大语言模型, 算力 etc. Hmm, that's tough for Microsoft's AI story. But we can use other things: Copilot, Azure, Windows, Office, 比尔·盖茨, 保罗·艾伦, 史蒂夫·鲍尔默, 萨提亚·纳德拉, Xbox, 蓝屏死机, WSL, GitHub, 领英, 动视暴雪, 反垄断, 浏览器大战, IE, 网景, .NET, Visual Studio, Minecradt (我的世界), HoloLens, Surface, Zune, Windows Phone, 诺基亚, 微软亚洲研究院, 李开复, 张亚勤, 沈向洋, Visual Basic, MS-DOS, 比尔·盖茨基金会, 微软收购动视暴雪, 世纪互联, 微软中国, 蓝帽, 拥抱开源, VSCode, TypeScript, C#, DirectX, MSX... 也有 微软 CEO 更替。\n\nDimensions:\n1. 关键人物 (创始人/CEO): 比尔·盖茨、保罗·艾伦、史蒂夫·鲍尔默、萨提亚·纳德拉、凯文·斯特罗斯基? no. 雷·奥兹? 斯科特·格思里? 用 比尔·盖茨、保罗·艾伦、史蒂夫·鲍尔默、萨提亚·纳德拉、沈向洋/李开复 (MSRA).\n2. 产品与代表作: Windows 95、Office、Xbox、Surface、Visual Studio Code、Azure? — Azure 可能与算力沾边但可。 用 Windows 95、Excel? 我用 Excel? 或许 Word? 用 \"Windows 95\"、\"IE浏览器/IE\"、\"Xbox\"、\"Visual Studio Code\"、\"Microsoft Office\"、\"Surface\"。\n3. 历史沿革/关键时刻: MS-DOS 与 IBM 合作、Altair BASIC、浏览器大战/网景、反垄断诉讼（美国诉微软案）、Windows Phone 失败/诺基亚收购、微软收购动视暴雪。\n4. 组织与文化: 微软亚洲研究院、微软研究院、拥抱开源/sliding scale?、绩效排名 stack ranking、\"成长型思维\"、Microsoft Garage? 用 微软亚洲研究院、\"成长型思维\"、内部绩效排名（stack ranking）、微软研究院、GitHub 收购、领英收购。\n5. 争议点: 蓝屏死机（CrowdStrike 事件）、Windows 强制更新? 反垄断、微软垄断案、Zune? \"蓝屏死机\"、\"Windows 10 强制更新\"、\"千年虫\"? 争议：反垄断、盗版 Windows/番茄花园、\"微软中国 盗版黑屏事件\" (2008 黑屏事件)、\"Vista 失败\"、Windows Genuine Advantage。\n6. 与中国/人文相关: 微软中国、MSRA、李开复、张亚勤、比尔·盖茨基金会、\"微软亚洲研究院 被称为 黄埔军校\"。\n\nLet me pick 6 dimensions maybe 5-6. Need each item note ≤15 chars (Chinese chars, keep short).\n\nLet's craft:\n\ntype: \"组织\"\nsummary: \"从 MS-DOS 到 Azure 的软件帝国\" — 20字内, ok (17 chars-ish). Count: 从MS-DOS到Azure的软件帝国 — fine.\n\nDimensions:\n\n1. 关键人物\n- 比尔·盖茨 — 辍学创业，霸榜首富多年 (note ≤15)\n- 保罗·艾伦 — 说服盖茨写 BASIC\n- 史蒂夫·鲍尔默 — 咆哮式 CEO，错失移动\n- 萨提亚·纳德拉 — 云优先，让微软回春\n- 沈向洋 — 微软 AI 老将，后归清华? 实际是 微软全球执行副总裁，现清华/IDEA。note: 微软AI掌门，华人面孔\n- 李开复 — MSRA 首任院长，后去谷歌 (谷歌已访问，但作为词可以？避免推荐谷歌内容；note 不提谷歌) → note: \"微软亚洲研究院首任院长\"\n\n2. 产品谱系\n- Windows 95 — 开机音乐成一代记忆\n- MS-DOS — 微软起家，借IBM起飞\n- Microsoft Office — 世界最赚钱办公套件\n- Xbox — 烧钱砸开主机市场\n- Visual Studio Code — 意外统治程序员编辑器\n- 微软模拟飞行 — 老牌硬核模拟器\n\n3. 关键节点（时间线/事件）\n- Altair BASIC — 微软第一桶金\n- IBM PC — 微软命运转折\n- 浏览器大战 — IE 与网景死斗\n- 美国诉微软案 — 差点被拆分的反垄断官司\n- 收购诺基亚 — 移动梦碎的烂摊子\n- 收购动视暴雪 — 687亿美元买游戏\n\n4. 组织与文化\n- 微软亚洲研究院 — 中国AI黄埔军校\n- 微软研究院 — 论文工厂还是象牙塔\n- 成长型思维 — 纳德拉治下的口头禅\n- 绩效排名 — 内部斗争的老梗\n- GitHub — 微软买下程序员家\n- 领英 — 微软的职业社交拼图\n\n5. 争议与黑历史\n- 蓝屏死机 — 全球一起看蓝屏\n- 番茄花园 — 盗版XP被连根拔起\n- 黑屏事件 — 微软对盗版下狠手\n- Windows Vista — 被骂到下架的系统\n- 捆绑销售 — IE 绑进 Windows 的官司根源\n- 强制更新 — 关机前被迫装系统\n\nHmm \"捆绑销售\" is a bit generic. Maybe \"Windows Update 强制重启\". Let's use \"Windows 强制更新\".\n\n6. 人文/周边 (口味偏娱乐)\n- 比尔及梅琳达·盖茨基金会 — 花钱比赚钱难\n- 微软模拟飞行 — already used. Replace.\n- Windows 开机音 — 布莱恩·伊诺写的\n- 微软中国 — 落地三十年的江湖\n- 帝国时代 — 微软出的经典RTS\n- 微软纸牌 — 摸鱼神器，训练鼠标\n- 扫雷 — 附带教会一代人点鼠标\n\nMaybe dimension 6: \"桌面小游戏与彩蛋\"：\n- 扫雷 — 练鼠标，也练心跳\n- 三维弹球 — 摸鱼的鼻祖\n- 微软纸牌 — 上班划水的启蒙\n- 帝国时代 — 微软自家做RTS\n- Windows 开机音 — 布莱恩·伊诺的5秒\n\nThat's fun. But maybe merge. 6 dimensions okay.\n\nCheck no duplicates from visited list: 微软 itself appears? Don't include as item. 谷歌、OpenAI、Anthropic、英伟达 avoided. OK.\n\nNotes ≤15 chars. Let's verify each note length:\n- \"辍学创业，霸榜首富多年\" = 11\n- \"说服盖茨一起写BASIC\" = 11? \"说服盖茨一起写BASIC\" 10 chars + BASIC.\n- \"咆哮式CEO，错失移动\" ok\n- \"云优先，让微软重回巅峰\" 11\n- \"微软AI掌门，华人学者\" 11\n- \"微软亚洲研究院首任院长\" 11\n- \"开机音乐成一代人记忆\" 10\n- \"微软起家，借IBM起飞\" ok\n- \"全球最赚钱的办公套件\" 10\n- \"烧钱砸开主机市场\" 8\n- \"意外统治程序员编辑器\" 9\n- \"老牌硬核飞行模拟\" 8\n- \"微软第一桶金\" 6\n- \"微软命运的转折点\" 8\n- \"IE与网景的生死斗\" ok\n- \"差点把微软拆了的官司\" 10\n- \"移动梦碎，留下烂摊子\" 10\n- \"687亿美元买游戏公司\" ok\n- \"中国AI的黄埔军校\" 9\n- \"论文工厂还是象牙塔\" 9\n- \"纳德拉挂在嘴边的词\" 9\n- \"内部内卷的老梗\" 7\n- \"微软买下程序员的家\" 9\n- \"职业社交的关键拼图\" 9\n- \"全球一起看蓝屏\" 7\n- \"盗版XP被连根拔起\" ok\n- \"微软对盗版下狠手\" 8\n- \"被骂到下架的系统\" 8\n- \"IE绑进Windows的根源\" ok\n- \"关机前被迫装系统\" 8\n- \"花钱比赚钱还难\" 7\n- \"布莱恩·伊诺写的5秒\" ok\n- \"落地三十年的江湖\" 8\n- \"微软自家出的RTS\" ok\n- \"摸鱼神器，练鼠标\" 8\n- \"教会一代人点鼠标\" 8\n\nGood. Also the note for \"微软全球执行副总裁\" - 沈向洋 note \"微软AI掌门，华人学者\" — fine, doesn't include 谷歌.\n\n李开复 note: \"微软亚洲研究院首任院长\" but that duplicates dimension 4's 微软亚洲研究院 item — fine.\n\nLet's output JSON.\n\nSummary ≤20 chars: \"从MS-DOS到云，最会转身的软件帝国\" — count: 从MS-DOS到云，最会转身的软件帝国 ~ maybe 18-20. Fine. Maybe simpler: \"从BASIC到云，最会转身的软件巨头\". I'll use \"从MS-DOS到云端的软件帝国\" (13 chars + latin).\n\nOutput.",
+   "word": "微软"
+  }
  },
  "斗转星移": {
   "word": "斗转星移",

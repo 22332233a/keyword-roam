@@ -24,6 +24,7 @@ LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com").rstrip
 API_URL = LLM_BASE_URL + "/chat/completions"
 API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-flash")  # 漫游要快和便宜,flash 够用;要更聪明改 deepseek-v4-pro
+MAX_TOKENS = int(os.environ.get("ROAM_MAX_TOKENS", "8000"))  # 思维链+正文共用,大词(如微软)思考就得上千 token
 
 DEFAULT_FLAVOR = "半学习半娱乐,科技/商业/历史/人文乱炖,别太正经"
 
@@ -129,7 +130,7 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2)
                     ],
                     "response_format": {"type": "json_object"},
                     "temperature": temperature,
-                    "max_tokens": 4000,  # flash 是思维链模型,思考也吃 token 额度,给足
+                    "max_tokens": MAX_TOKENS,  # 思维链+正文共用;按实际用量计费,上限抬高不多花钱
                 },
                 timeout=90,
             )

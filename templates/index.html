@@ -97,6 +97,15 @@
     font-size: 12px; color: #9aa0ad; line-height: 1.8;
     font-family: Consolas, "Microsoft YaHei", monospace;
   }
+  /* 🧭漫游结果折叠框:三组词表并排的小卡片 */
+  .r-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: left; }
+  .r-grid h4 { font-size: 12px; color: #6a6f7c; margin-bottom: 6px; letter-spacing: 1px; }
+  .r-item { border: 1px solid #2a2e3a; border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; }
+  .r-item .rw { cursor: pointer; font-weight: 600; font-size: 13px; }
+  .r-item .rw:hover { color: #7d9dff; }
+  .r-item.seen .rw { color: #5da97a; }
+  .r-item .note { font-size: 11px; color: #8a8f9c; margin-top: 2px; }
+  @media (max-width: 900px) { .r-grid { grid-template-columns: 1fr; } }
   #history { max-width: 1600px; margin: 30px auto 0; }
   #history h3 { font-size: 13px; color: #6a6f7c; margin-bottom: 8px; }
   #chips-wrap { overflow: hidden; }
@@ -330,18 +339,17 @@ function renderCenter(word, tag) {
      <div class="center-actions">
        <button class="deep-btn lg" onclick="roamDeep('${w}')">🔍深挖</button>
        <button class="deep-btn lg" onclick="toggleDetail('${w}')">📖详情</button>
-       <button class="deep-btn lg" onclick="roamThinking()">🧭漫游思考</button>
+       <button class="deep-btn lg" onclick="roamData()">🧭漫游结果</button>
      </div>
      <div class="detail-box" id="center-detail" hidden></div>
      <div class="detail-box think-box" id="center-think" hidden></div>
-     <div class="detail-box think-box" id="center-roamthink" hidden></div>`;
+     <div class="detail-box" id="center-roamdata" hidden></div>`;
 }
 
 /* 普通漫游:左栏固定三组 */
 function renderBasic(d, cached) {
   currentViewMode = "basic";
   currentThinking = "";
-  if (d.thinking) roamThinkMem.set(d.word, d.thinking);   // 本次的漫游思维链进内存,🧭按钮直接用
   renderCenter(d.word, (cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆"));
   renderGroups([
     { title: "⬆ 上级分类", items: d.parents },
@@ -375,32 +383,45 @@ function toggleThinking() {
   box.hidden = false;
 }
 
-/* 🧭漫游思考:纯复用——只显示已有的漫游思维链,绝不生成新东西(零花费)。
-   顺序:本次会话内存 → 后端缓存(cache_only=1,后端保证只查不生成)。都没有就明说 */
-const roamThinkMem = new Map();   // word -> 漫游思维链
+/* 🧭漫游结果:读这个词已有的漫游数据(上级/下级/相邻词),折叠显示在正下方。
+   纯复用——cache_only 模式只查缓存不生成;没漫游过就明说,不花一次钱。
+   词可点击,跟随当前页面模式跳转 */
+const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得重复请求)
 
-async function roamThinking() {
-  const box = document.getElementById("center-roamthink");
+async function roamData() {
+  const box = document.getElementById("center-roamdata");
   if (!box) return;
   if (!box.hidden) { box.hidden = true; return; }   // 开着 → 收起
-  const mem = roamThinkMem.get(currentWord);
-  if (mem) { box.textContent = mem; box.hidden = false; return; }
   box.hidden = false;
-  box.textContent = "找缓存里的漫游思维链…";
+  const mem = roamDataMem.get(currentWord);
+  if (mem) { renderRoamData(box, mem); return; }    // 每次展开都重画,足迹变色保持新鲜
+  box.textContent = "读漫游缓存…";
   try {
     const flavor = document.getElementById("flavor-input").value;
     const resp = await fetch(`/api/expand?word=${encodeURIComponent(currentWord)}&flavor=${encodeURIComponent(flavor)}&mode=basic&cache_only=1`);
     const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || "没有缓存");
-    if (body.data.thinking) {
-      roamThinkMem.set(currentWord, body.data.thinking);
-      box.textContent = body.data.thinking;
-    } else {
-      box.textContent = "(这个词条的漫游缓存是旧格式,当时还没存思维链;下次漫游它会带上)";
-    }
+    if (!resp.ok) throw new Error(body.error || "还没漫游过这个词");
+    roamDataMem.set(currentWord, body.data);
+    renderRoamData(box, body.data);
   } catch (err) {
-    box.textContent = "(没有可复用的漫游思维链:" + (err.message || "还没漫游过这个词") + ")";
+    box.textContent = "(还没有可复用的漫游结果:" + (err.message || "没漫游过") + ")";
   }
+}
+
+function renderRoamData(box, d) {
+  const mini = it => {
+    const seen = visited.has(it.word) ? " seen" : "";
+    const w = esc(it.word).replace(/'/g, "\\'");
+    return `<div class="r-item${seen}">
+      <span class="rw" onclick="goWord('${w}')">${esc(it.word)}</span>
+      <div class="note">${esc(it.note)}</div>
+    </div>`;
+  };
+  box.innerHTML = `<div class="r-grid">
+    <div><h4>⬆ 上级分类</h4>${(d.parents ?? []).map(mini).join("")}</div>
+    <div><h4>⬇ 下级分类</h4>${(d.children ?? []).map(mini).join("")}</div>
+    <div><h4>↔ 相邻词</h4>${(d.similar ?? []).map(mini).join("")}</div>
+  </div>`;
 }
 
 let chipsExpanded = false;   // 足迹默认折叠到两行

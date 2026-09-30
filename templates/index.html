@@ -107,7 +107,7 @@
   <div class="cols" id="cols"></div>
 
   <div id="history">
-    <h3>足迹(自动保存,重启不丢;点词回游)</h3>
+    <h3>足迹(自动保存,重启不丢;点词按当前页模式打开——漫游页点=漫游,深挖页点=深挖)</h3>
     <div style="margin-bottom:8px">
       <span class="chip ftab active" data-f="all" onclick="setFilter('all')">全部</span>
       <span class="chip ftab" data-f="roam" onclick="setFilter('roam')">🧭 漫游图</span>
@@ -132,6 +132,7 @@
 <script>
 const visited = new Map();   // word -> {feats:[roam/deep/detail], time}
 let currentWord = "";   // 当前中心词,追问时作为上下文
+let currentViewMode = "basic";   // 当前页面模式:点关键词时继承它(漫游页点=漫游,深挖页点=深挖)
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g,
@@ -145,13 +146,16 @@ function links(w) {
     <a href="https://weixin.sogou.com/weixin?type=2&query=${e}" target="_blank">公众号</a>
   </span>`;
 }
-/* 一个词条:点词=普通漫游,🔍=深挖,📖=150字详情,🔄=重写,末尾是三颗搜索链接 */
+/* 按当前页面模式打开一个词:深挖页里点击=深挖,漫游页里点击=漫游 */
+function goWord(word) { go(word, currentViewMode); }
+
+/* 一个词条:点词=跟随当前模式,🔍/📖/🔄=指定动作,末尾是三颗搜索链接 */
 function itemRow(it) {
   const seen = visited.has(it.word) ? " seen" : "";
   const w = esc(it.word).replace(/'/g, "\\'");
   return `<div class="item${seen}">
     <div class="row">
-      <span class="w" onclick="roam('${w}')">${esc(it.word)}</span>
+      <span class="w" onclick="goWord('${w}')">${esc(it.word)}</span>
       <button class="deep-btn" onclick="roamDeep('${w}')">🔍深挖</button>
       <button class="deep-btn" onclick="toggleDetail(this, '${w}')">📖详情</button>
       <button class="deep-btn" onclick="regenDetail(this, '${w}')">🔄重写</button>
@@ -277,6 +281,7 @@ function renderCenter(word, tag) {
 
 /* 普通漫游:固定三栏 */
 function renderBasic(d, cached) {
+  currentViewMode = "basic";
   renderCenter(d.word, cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆");
   document.getElementById("cols").innerHTML =
     col("⬆ 上级分类", d.parents) +
@@ -288,6 +293,7 @@ function renderBasic(d, cached) {
 let currentThinking = "";
 
 function renderDeep(d, cached) {
+  currentViewMode = "deep";
   currentThinking = d.thinking || "";
   const tag = `[${esc(d.type ?? "?")}] ${esc(d.summary ?? "")}${cached ? " · ✓缓存" : " · ✨"}`;
   renderCenter(d.word, tag);
@@ -316,7 +322,7 @@ function renderChips() {
     words = words.filter(([, v]) => (v.feats ?? []).includes(historyFilter));
   }
   document.getElementById("chips").innerHTML = words.map(([w, v]) =>
-    `<span class="chip" onclick="roam('${esc(w).replace(/'/g, "\\'")}')">${(v.feats ?? []).map(f => icons[f] ?? "").join("")} ${esc(w)}</span>`
+    `<span class="chip" onclick="goWord('${esc(w).replace(/'/g, "\\'")}')">${(v.feats ?? []).map(f => icons[f] ?? "").join("")} ${esc(w)}</span>`
   ).join("") || `<span style="color:#6a6f7c;font-size:13px">(这一类还没有足迹)</span>`;
 
   const wrap = document.getElementById("chips-wrap");

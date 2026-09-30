@@ -25,50 +25,62 @@
   button:hover { background: #3a66e0; }
   #status { text-align: center; color: #6a6f7c; min-height: 22px; margin-bottom: 10px; }
   .error { color: #e06c75; text-align: center; }
+
+  /* ===== 主从布局:左边词列表,右边选中词的版面 ===== */
+  #layout { display: flex; gap: 24px; max-width: 1600px; margin: 0 auto; align-items: flex-start; }
+  #sidebar {
+    width: 300px; flex-shrink: 0;
+    position: sticky; top: 12px;
+    max-height: calc(100vh - 24px); overflow-y: auto;
+  }
+  #main { flex: 1; min-width: 0; }
+  .s-group h3 {
+    font-size: 13px; color: #6a6f7c; letter-spacing: 2px; margin: 16px 0 8px;
+  }
+  .s-item {
+    background: #1c1f28; border: 1px solid #2a2e3a; border-radius: 8px;
+    padding: 7px 10px; margin-bottom: 6px;
+  }
+  .s-item .row { display: flex; align-items: center; gap: 8px; }
+  .s-item .w {
+    cursor: pointer; font-size: 15px; font-weight: 600;
+    min-width: 0; overflow-wrap: anywhere;
+  }
+  .s-item .w:hover { color: #7d9dff; }
+  .s-item.seen .w { color: #5da97a; }        /* 漫游过的词 */
+  .s-item .mini {
+    margin-left: auto; flex-shrink: 0;
+    background: none; border: 1px solid #3a3f4e; color: #b48aff;
+    border-radius: 6px; padding: 1px 7px; font-size: 12px; cursor: pointer;
+  }
+  .s-item .mini:hover { border-color: #b48aff; }
+  .s-item .note {
+    font-size: 12px; color: #8a8f9c; margin-top: 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
   #center {
-    text-align: center; font-size: 44px; font-weight: 700;
-    color: #f2f3f7; margin: 6px 0 34px; letter-spacing: 2px;
+    text-align: center; font-size: 40px; font-weight: 700;
+    color: #f2f3f7; margin: 6px 0 24px; letter-spacing: 2px;
   }
   #center small { display: block; font-size: 13px; color: #6a6f7c; font-weight: 400; margin-top: 6px; }
-  .center-actions { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+  .center-actions { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
   .deep-btn.lg { font-size: 14px; padding: 4px 14px; }
+  .links { font-size: 13px; }
+  .links a { color: #5b83d6; text-decoration: none; margin: 0 5px; }
+  .links a:hover { text-decoration: underline; }
+  .regen-link { color: #5b83d6; cursor: pointer; font-size: 12px; margin-left: 6px; }
+  .regen-link:hover { text-decoration: underline; }
   #center .detail-box {
-    max-width: 640px; margin: 10px auto 0; text-align: left;
+    max-width: 760px; margin: 14px auto 0; text-align: left;
     background: #1c1f28; border: 1px solid #2a2e3a; border-radius: 10px; padding: 12px 16px;
+    font-size: 14px; line-height: 1.8; color: #c8cbd4; white-space: pre-wrap;
   }
   .think-box {
     font-size: 12px; color: #9aa0ad; line-height: 1.8;
     font-family: Consolas, "Microsoft YaHei", monospace;
   }
-  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; max-width: 1400px; margin: 0 auto; }
-  .col h3 {
-    font-size: 13px; color: #6a6f7c; margin-bottom: 10px;
-    letter-spacing: 2px;
-  }
-  .item {
-    background: #1c1f28; border: 1px solid #2a2e3a; border-radius: 10px;
-    padding: 10px 12px; margin-bottom: 8px;
-  }
-  .item .row { display: flex; align-items: baseline; gap: 8px; }
-  .item .w { cursor: pointer; font-size: 16px; font-weight: 600; }
-  .item .w:hover { color: #7d9dff; }
-  .item.seen .w { color: #5da97a; }        /* 漫游过的词 */
-  .item .note { font-size: 12px; color: #8a8f9c; margin: 4px 0 6px; }
-  .item .links { font-size: 12px; }
-  .item .links a { color: #5b83d6; text-decoration: none; margin-right: 10px; }
-  .item .links a:hover { text-decoration: underline; }
-  .regen-link { color: #5b83d6; cursor: pointer; font-size: 12px; margin-left: 6px; }
-  .regen-link:hover { text-decoration: underline; }
-  .item .deep-btn {
-    margin-left: auto; background: none; border: 1px solid #3a3f4e; color: #b48aff;
-    border-radius: 6px; padding: 1px 8px; font-size: 12px; cursor: pointer;
-  }
-  .item .deep-btn:hover { border-color: #b48aff; }
-  .item .detail-box {
-    border-top: 1px dashed #333747; margin-top: 8px; padding-top: 8px;
-    font-size: 13px; line-height: 1.7; color: #c8cbd4; white-space: pre-wrap;
-  }
-  #history { max-width: 1400px; margin: 30px auto 0; }
+  #history { max-width: 1600px; margin: 30px auto 0; }
   #history h3 { font-size: 13px; color: #6a6f7c; margin-bottom: 8px; }
   #chips-wrap { overflow: hidden; }
   #chips-wrap.collapsed { max-height: 78px; }   /* 默认只露出两行 */
@@ -102,9 +114,11 @@
   </header>
 
   <div id="status"></div>
-  <div id="center"></div>
 
-  <div class="cols" id="cols"></div>
+  <div id="layout">
+    <aside id="sidebar"></aside>
+    <main id="main"><div id="center"></div></main>
+  </div>
 
   <div id="history">
     <h3>足迹(自动保存,重启不丢;点词按当前页模式打开——漫游页点=漫游,深挖页点=深挖)</h3>
@@ -146,67 +160,72 @@ function links(w) {
     <a href="https://weixin.sogou.com/weixin?type=2&query=${e}" target="_blank">公众号</a>
   </span>`;
 }
-/* 按当前页面模式打开一个词:深挖页里点击=深挖,漫游页里点击=漫游 */
-function goWord(word) { go(word, currentViewMode); }
 
-/* 一个词条:点词=跟随当前模式,🔍/📖/🔄=指定动作,末尾是三颗搜索链接 */
-function itemRow(it) {
+/* ===== 左栏:按分类分组的词列表,点词=跟随当前模式,📖=右栏看它的详情 ===== */
+function sideItem(it) {
   const seen = visited.has(it.word) ? " seen" : "";
   const w = esc(it.word).replace(/'/g, "\\'");
-  return `<div class="item${seen}">
+  return `<div class="s-item${seen}" data-word="${esc(it.word)}">
     <div class="row">
-      <span class="w" onclick="goWord('${w}')">${esc(it.word)}</span>
-      <button class="deep-btn" onclick="roamDeep('${w}')">🔍深挖</button>
-      <button class="deep-btn" onclick="toggleDetail(this, '${w}')">📖详情</button>
-      <button class="deep-btn" onclick="regenDetail(this, '${w}')">🔄重写</button>
+      <span class="w" onclick="goWord('${w}')" title="${esc(it.note)}">${esc(it.word)}</span>
+      <button class="mini" onclick="sideDetail('${w}')" title="在右栏看这个词的详情">📖</button>
     </div>
     <div class="note">${esc(it.note)}</div>
-    <div class="detail-box" hidden></div>
-    ${links(it.word)}
   </div>`;
 }
+function group(title, items) {
+  return `<div class="s-group"><h3>${title}</h3>${(items ?? []).map(sideItem).join("")}</div>`;
+}
+function renderSidebar(html) {
+  document.getElementById("sidebar").innerHTML = html;
+}
+/* 足迹变化后同步左栏的"去过"变色,不重建列表(避免滚动位置跳动) */
+function refreshSeen() {
+  document.querySelectorAll(".s-item").forEach(el => {
+    el.classList.toggle("seen", visited.has(el.dataset.word));
+  });
+}
+
+/* ===== 右栏:中心词 + 动作按钮 + 共用的详情/思考框 ===== */
 
 function renderDetailInto(box, word, data) {
   // 模型可能推断出输入实际指向的名称(如句子→领英中国),顺带展示;末尾挂🔄重写入口
   const named = data.word && data.word !== word ? `【${esc(data.word)}】` : "";
   const w = esc(word).replace(/'/g, "\\'");
   box.innerHTML = named + esc(data.detail) +
-    ` <a class="regen-link" onclick="regenDetail(this, '${w}')">🔄重写</a>`;
+    ` <a class="regen-link" onclick="showDetail('${w}', true)">🔄重写</a>`;
   box.dataset.loaded = "1";
 }
 
 async function fetchDetail(word, force) {
   const flavor = document.getElementById("flavor-input").value;
-  const itemEl = document.querySelector(`.item .w[onclick*="roam('${word.replace(/'/g, "\\'")}')"]`)?.closest(".item");
-  const ctx = itemEl
-    ? `${itemEl.querySelector(".w")?.textContent ?? ""}(${itemEl.querySelector(".note")?.textContent ?? ""})`
+  // 把侧栏词条的注释带上,句式输入推断指向时需要上下文
+  const el = document.querySelector(`.s-item[data-word="${CSS.escape(word)}"]`);
+  const ctx = el
+    ? `${word}(${el.querySelector(".note")?.textContent ?? ""})`
     : (currentWord ? `关于「${currentWord}」的介绍` : "");
   const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&mode=detail&flavor=${encodeURIComponent(flavor)}${force ? "&force=1" : ""}&ctx=${encodeURIComponent(ctx)}`);
   const body = await resp.json();
-  if (!resp.ok) throw new Error(body.error || resp.statusText);
+  if (!resp.ok) throw new Error(body.error || body.statusText);
   return body.data;
 }
 
-/* 详情:首次点击调 API 生成 150 字解释,之后开合切换(结果已进缓存,不重复花钱)
-   词条卡片里就近找 detail-box;中心词则用 #center-detail */
-async function toggleDetail(btn, word) {
-  const box =
-    btn.closest(".item")?.querySelector(".detail-box") ||
-    document.getElementById("center-detail");
-  if (!box) return;
-  if (!box.hidden) { box.hidden = true; return; }   // 已开着 → 收起
+/* 右栏的详情框是所有词共用的:detailOwner 记着当前展示谁,换词就重新生成 */
+async function showDetail(word, force) {
+  const box = document.getElementById("center-detail");
   box.hidden = false;
-  if (box.dataset.loaded) return;                    // 已有内容 → 直接展开
-  box.textContent = "生成详情中…";
+  if (!force && box.dataset.loaded === "1" && box.dataset.owner === word) return;
+  box.dataset.owner = word;
+  box.textContent = force ? "重写中…(换一次骰子)" : "生成详情中…";
   try {
-    renderDetailInto(box, word, await fetchDetail(word, false));
+    renderDetailInto(box, word, await fetchDetail(word, force));
   } catch (err) {
     // 详情偶发解析失败(句式输入尤其),自动降级为追问式解释,保证有答案
     try {
       const q = `解释这个说法(它出自关于「${currentWord}」的介绍):「${word}」`;
       const resp2 = await fetch(`/api/ask?word=${encodeURIComponent(currentWord)}&q=${encodeURIComponent(q)}`);
       const body2 = await resp2.json();
-      if (!resp2.ok) throw new Error(body2.error || resp2.statusText);
+      if (!resp2.ok) throw new Error(body2.error || body2.statusText);
       box.textContent = body2.data.answer + "\n(降级为追问式解释)";
       box.dataset.loaded = "1";
     } catch (err2) {
@@ -214,27 +233,22 @@ async function toggleDetail(btn, word) {
     }
   }
 }
-
-/* 🔄重写:无视缓存强制重新生成(详情写得烂时的逃生门),替换旧解释 */
-async function regenDetail(btn, word) {
-  const box =
-    btn.closest(".item")?.querySelector(".detail-box") ||
-    document.getElementById("center-detail");
-  if (!box) return;
-  box.hidden = false;
-  box.textContent = "重写中…(换一次骰子)";
-  try {
-    renderDetailInto(box, word, await fetchDetail(word, true));
-  } catch (err) {
-    box.textContent = "重写失败:" + err.message;
-  }
+/* 中心词的📖详情:开着且是同一个词 → 收起;否则加载 */
+function toggleDetail(word) {
+  const box = document.getElementById("center-detail");
+  if (!box.hidden && box.dataset.owner === word) { box.hidden = true; return; }
+  showDetail(word, false);
 }
-function col(title, items) {
-  return `<div class="col"><h3>${title}</h3>${(items ?? []).map(itemRow).join("")}</div>`;
+/* 侧栏词条的📖:右栏详情框展示该词,并滚到可见处 */
+function sideDetail(word) {
+  showDetail(word, false);
+  document.getElementById("center-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 async function roam(word) { await go(word, "basic"); }
 async function roamDeep(word) { await go(word, "deep"); }
+/* 按当前页面模式打开一个词:深挖页里点击=深挖,漫游页里点击=漫游 */
+function goWord(word) { go(word, currentViewMode); }
 
 async function go(word, mode) {
   word = (word || "").trim();
@@ -249,7 +263,7 @@ async function go(word, mode) {
     const flavor = document.getElementById("flavor-input").value;
     const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&flavor=${encodeURIComponent(flavor)}&mode=${mode}`);
     const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || resp.statusText);
+    if (!resp.ok) throw new Error(body.error || body.statusText);
 
     const d = body.data;
     // 更新足迹:叠加功能标记,挪到最新位置
@@ -259,6 +273,7 @@ async function go(word, mode) {
     if (mode === "basic") renderBasic(d, body.cached);
     else renderDeep(d, body.cached);
     renderChips();
+    refreshSeen();
     status.textContent = "";
   } catch (err) {
     status.textContent = "出错:" + err.message;
@@ -270,26 +285,28 @@ function renderCenter(word, tag) {
   const w = esc(word).replace(/'/g, "\\'");
   document.getElementById("center").innerHTML =
     `${esc(word)}
-     <small>${tag}</small>
+     <small>${tag}<br>${links(word)}</small>
      <div class="center-actions">
        <button class="deep-btn lg" onclick="roamDeep('${w}')">🔍深挖</button>
-       <button class="deep-btn lg" onclick="toggleDetail(this, '${w}')">📖详情</button>
+       <button class="deep-btn lg" onclick="toggleDetail('${w}')">📖详情</button>
      </div>
      <div class="detail-box" id="center-detail" hidden></div>
      <div class="detail-box think-box" id="center-think" hidden></div>`;
 }
 
-/* 普通漫游:固定三栏 */
+/* 普通漫游:左栏固定三组 */
 function renderBasic(d, cached) {
   currentViewMode = "basic";
-  renderCenter(d.word, cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆");
-  document.getElementById("cols").innerHTML =
-    col("⬆ 上级分类", d.parents) +
-    col("⬇ 下级分类", d.children) +
-    col("↔ 相邻词(点词继续漫游)", d.similar);
+  currentThinking = "";
+  renderCenter(d.word, (cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆"));
+  renderSidebar(
+    group("⬆ 上级分类", d.parents) +
+    group("⬇ 下级分类", d.children) +
+    group("↔ 相邻词(点词继续漫游)", d.similar)
+  );
 }
 
-/* 深挖:按类型动态生成维度列,并附上🧠思考过程入口 */
+/* 深挖:按类型动态生成的维度进左栏,🧠思考过程在右栏 */
 let currentThinking = "";
 
 function renderDeep(d, cached) {
@@ -301,8 +318,9 @@ function renderDeep(d, cached) {
     document.querySelector("#center .center-actions").innerHTML +=
       `<button class="deep-btn lg" onclick="toggleThinking()">🧠思考过程</button>`;
   }
-  document.getElementById("cols").innerHTML =
-    (d.dimensions ?? []).map(dim => col("◈ " + esc(dim.name), dim.items)).join("");
+  renderSidebar(
+    (d.dimensions ?? []).map(dim => group("◈ " + esc(dim.name), dim.items)).join("")
+  );
 }
 
 function toggleThinking() {
@@ -393,7 +411,7 @@ async function askWhat() {
     const flavor = document.getElementById("flavor-input").value;
     const resp = await fetch(`/api/expand?word=${encodeURIComponent(selTerm)}&mode=detail&flavor=${encodeURIComponent(flavor)}`);
     const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || resp.statusText);
+    if (!resp.ok) throw new Error(body.error || body.statusText);
     ans.textContent = body.data.detail;
     const fe = new Set(visited.get(selTerm)?.feats ?? []);
     fe.add("detail");
@@ -419,7 +437,7 @@ async function sendAsk() {
   try {
     const resp = await fetch(`/api/ask?word=${encodeURIComponent(currentWord)}&q=${encodeURIComponent(q)}&ctx=${encodeURIComponent(selContext)}`);
     const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || resp.statusText);
+    if (!resp.ok) throw new Error(body.error || body.statusText);
     ans.textContent = body.data.answer;
   } catch (err) {
     ans.textContent = "出错:" + err.message;

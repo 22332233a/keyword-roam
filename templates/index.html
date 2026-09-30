@@ -30,6 +30,12 @@
     color: #f2f3f7; margin: 6px 0 34px; letter-spacing: 2px;
   }
   #center small { display: block; font-size: 13px; color: #6a6f7c; font-weight: 400; margin-top: 6px; }
+  .center-actions { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+  .deep-btn.lg { font-size: 14px; padding: 4px 14px; }
+  #center .detail-box {
+    max-width: 640px; margin: 10px auto 0; text-align: left;
+    background: #1c1f28; border: 1px solid #2a2e3a; border-radius: 10px; padding: 12px 16px;
+  }
   .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; max-width: 1400px; margin: 0 auto; }
   .col h3 {
     font-size: 13px; color: #6a6f7c; margin-bottom: 10px;
@@ -111,9 +117,13 @@ function itemRow(it) {
   </div>`;
 }
 
-/* 详情:首次点击调 API 生成 150 字解释,之后开合切换(结果已进缓存,不重复花钱) */
+/* 详情:首次点击调 API 生成 150 字解释,之后开合切换(结果已进缓存,不重复花钱)
+   词条卡片里就近找 detail-box;中心词则用 #center-detail */
 async function toggleDetail(btn, word) {
-  const box = btn.closest(".item").querySelector(".detail-box");
+  const box =
+    btn.closest(".item")?.querySelector(".detail-box") ||
+    document.getElementById("center-detail");
+  if (!box) return;
   if (!box.hidden) { box.hidden = true; return; }   // 已开着 → 收起
   box.hidden = false;
   if (box.dataset.loaded) return;                    // 已有内容 → 直接展开
@@ -163,7 +173,15 @@ async function go(word, mode) {
 }
 
 function renderCenter(word, tag) {
-  document.getElementById("center").innerHTML = `${esc(word)}<small>${tag}</small>`;
+  const w = esc(word).replace(/'/g, "\\'");
+  document.getElementById("center").innerHTML =
+    `${esc(word)}
+     <div class="center-actions">
+       <button class="deep-btn lg" onclick="roamDeep('${w}')">🔍深挖</button>
+       <button class="deep-btn lg" onclick="toggleDetail(this, '${w}')">📖详情</button>
+     </div>
+     <div class="detail-box" id="center-detail" hidden></div>
+     <small>${tag}</small>`;
 }
 
 /* 普通漫游:固定三栏 */

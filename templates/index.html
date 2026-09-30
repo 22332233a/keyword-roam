@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8">
+<title>关键词漫游器</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #12141a; color: #d8dae0; min-height: 100vh;
+    font-family: "Microsoft YaHei", system-ui, sans-serif; padding: 24px;
+  }
+  header { display: flex; gap: 8px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+  input {
+    background: #1c1f28; border: 1px solid #333747; color: #d8dae0;
+    border-radius: 8px; padding: 10px 14px; font-size: 15px;
+  }
+  input:focus { outline: none; border-color: #4a7dff; }
+  #word-input { width: 220px; }
+  #flavor-input { width: 320px; font-size: 13px; color: #8a8f9c; }
+  button {
+    background: #4a7dff; color: white; border: none; border-radius: 8px;
+    padding: 10px 22px; font-size: 15px; cursor: pointer;
+  }
+  button:hover { background: #3a66e0; }
+  #status { text-align: center; color: #6a6f7c; min-height: 22px; margin-bottom: 10px; }
+  .error { color: #e06c75; text-align: center; }
+  #center {
+    text-align: center; font-size: 44px; font-weight: 700;
+    color: #f2f3f7; margin: 6px 0 34px; letter-spacing: 2px;
+  }
+  #center small { display: block; font-size: 13px; color: #6a6f7c; font-weight: 400; margin-top: 6px; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; max-width: 1400px; margin: 0 auto; }
+  .col h3 {
+    font-size: 13px; color: #6a6f7c; margin-bottom: 10px;
+    letter-spacing: 2px;
+  }
+  .item {
+    background: #1c1f28; border: 1px solid #2a2e3a; border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 8px;
+  }
+  .item .row { display: flex; align-items: baseline; gap: 8px; }
+  .item .w { cursor: pointer; font-size: 16px; font-weight: 600; }
+  .item .w:hover { color: #7d9dff; }
+  .item.seen .w { color: #5da97a; }        /* 漫游过的词 */
+  .item .note { font-size: 12px; color: #8a8f9c; margin: 4px 0 6px; }
+  .item .links { font-size: 12px; }
+  .item .links a { color: #5b83d6; text-decoration: none; margin-right: 10px; }
+  .item .links a:hover { text-decoration: underline; }
+  .item .deep-btn {
+    margin-left: auto; background: none; border: 1px solid #3a3f4e; color: #b48aff;
+    border-radius: 6px; padding: 1px 8px; font-size: 12px; cursor: pointer;
+  }
+  .item .deep-btn:hover { border-color: #b48aff; }
+  .item .detail-box {
+    border-top: 1px dashed #333747; margin-top: 8px; padding-top: 8px;
+    font-size: 13px; line-height: 1.7; color: #c8cbd4; white-space: pre-wrap;
+  }
+  #history { max-width: 1400px; margin: 30px auto 0; }
+  #history h3 { font-size: 13px; color: #6a6f7c; margin-bottom: 8px; }
+  .chip {
+    display: inline-block; background: #1c1f28; border: 1px solid #2a2e3a;
+    border-radius: 999px; padding: 4px 12px; margin: 0 6px 6px 0;
+    font-size: 13px; color: #8a8f9c; cursor: pointer;
+  }
+  .chip:hover { color: #7d9dff; border-color: #4a7dff; }
+</style>
+</head>
+<body>
+  <header>
+    <input id="word-input" placeholder="输入一个词,开始漫游…">
+    <input id="flavor-input" value="{{ default_flavor }}" title="口味偏好">
+    <button onclick="roamFromInput()">漫游</button>
+  </header>
+
+  <div id="status"></div>
+  <div id="center"></div>
+
+  <div class="cols" id="cols"></div>
+
+  <div id="history"><h3>足迹(自动保存,重启不丢;点词回游)</h3><div id="chips"></div></div>
+
+<script>
+const visited = new Set();
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g,
+    c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function links(w) {
+  const e = encodeURIComponent(w);
+  return `<span class="links">
+    <a href="https://search.bilibili.com/all?keyword=${e}" target="_blank">B站</a>
+    <a href="https://baike.baidu.com/search?word=${e}" target="_blank">百科</a>
+    <a href="https://weixin.sogou.com/weixin?type=2&query=${e}" target="_blank">公众号</a>
+  </span>`;
+}
+/* 一个词条:点词=普通漫游,🔍=深挖,📖=150字详情,末尾是三颗搜索链接 */
+function itemRow(it) {
+  const seen = visited.has(it.word) ? " seen" : "";
+  const w = esc(it.word).replace(/'/g, "\\'");
+  return `<div class="item${seen}">
+    <div class="row">
+      <span class="w" onclick="roam('${w}')">${esc(it.word)}</span>
+      <button class="deep-btn" onclick="roamDeep('${w}')">🔍深挖</button>
+      <button class="deep-btn" onclick="toggleDetail(this, '${w}')">📖详情</button>
+    </div>
+    <div class="note">${esc(it.note)}</div>
+    <div class="detail-box" hidden></div>
+    ${links(it.word)}
+  </div>`;
+}
+
+/* 详情:首次点击调 API 生成 150 字解释,之后开合切换(结果已进缓存,不重复花钱) */
+async function toggleDetail(btn, word) {
+  const box = btn.closest(".item").querySelector(".detail-box");
+  if (!box.hidden) { box.hidden = true; return; }   // 已开着 → 收起
+  box.hidden = false;
+  if (box.dataset.loaded) return;                    // 已有内容 → 直接展开
+  box.textContent = "生成详情中…";
+  try {
+    const flavor = document.getElementById("flavor-input").value;
+    const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&mode=detail&flavor=${encodeURIComponent(flavor)}`);
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(body.error || resp.statusText);
+    box.textContent = body.data.detail;
+    box.dataset.loaded = "1";
+  } catch (err) {
+    box.textContent = "出错:" + err.message;
+  }
+}
+function col(title, items) {
+  return `<div class="col"><h3>${title}</h3>${(items ?? []).map(itemRow).join("")}</div>`;
+}
+
+async function roam(word) { await go(word, "basic"); }
+async function roamDeep(word) { await go(word, "deep"); }
+
+async function go(word, mode) {
+  word = (word || "").trim();
+  if (!word) return;
+  document.getElementById("word-input").value = word;
+  const status = document.getElementById("status");
+  status.textContent = mode === "deep" ? "深挖中…(思维链模型,多等几秒)" : "问 AI 中…";
+  status.className = "";
+
+  try {
+    const flavor = document.getElementById("flavor-input").value;
+    const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&flavor=${encodeURIComponent(flavor)}&mode=${mode}`);
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(body.error || resp.statusText);
+
+    const d = body.data;
+    visited.delete(word); visited.add(word);   // 挪到足迹最新位置
+    if (mode === "basic") renderBasic(d, body.cached);
+    else renderDeep(d, body.cached);
+    renderChips();
+    status.textContent = "";
+  } catch (err) {
+    status.textContent = "出错:" + err.message;
+    status.className = "error";
+  }
+}
+
+function renderCenter(word, tag) {
+  document.getElementById("center").innerHTML = `${esc(word)}<small>${tag}</small>`;
+}
+
+/* 普通漫游:固定三栏 */
+function renderBasic(d, cached) {
+  renderCenter(d.word, cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆");
+  document.getElementById("cols").innerHTML =
+    col("⬆ 上级分类", d.parents) +
+    col("⬇ 下级分类", d.children) +
+    col("↔ 相邻词(点词继续漫游)", d.similar);
+}
+
+/* 深挖:按类型动态生成维度列 */
+function renderDeep(d, cached) {
+  renderCenter(d.word, `[${esc(d.type ?? "?")}] ${esc(d.summary ?? "")}${cached ? " · ✓缓存" : " · ✨"}`);
+  document.getElementById("cols").innerHTML =
+    (d.dimensions ?? []).map(dim => col("◈ " + esc(dim.name), dim.items)).join("");
+}
+
+function renderChips() {
+  document.getElementById("chips").innerHTML = [...visited]
+    .map(w => `<span class="chip" onclick="roam('${esc(w).replace(/'/g, "\\'")}')">${esc(w)}</span>`)
+    .join("");
+}
+
+function roamFromInput() {
+  roam(document.getElementById("word-input").value);
+}
+
+// 启动时从后端加载历史足迹(存在 data/cache.json 里,重启不丢)
+async function loadHistory() {
+  try {
+    const resp = await fetch("/api/cache");
+    const body = await resp.json();
+    for (const w of body.words) visited.add(w);
+    renderChips();
+  } catch (err) { /* 加载失败就当没有历史,不影响使用 */ }
+}
+loadHistory();
+
+document.getElementById("word-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") roamFromInput();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+"""关键词漫游器:给一个词,返回上级分类/下级分类/相邻词,人挑有意思的去 B 站搜视频。
+
+用法:
+    setx DEEPSEEK_API_KEY "sk-..."   # 或在 PowerShell 里 $env:DEEPSEEK_API_KEY="sk-..."
+    python app.py                    # 打开 http://127.0.0.1:8765
+
+数据:
+    data/cache.json 保存漫游过的关键词图,查过的词不再请求 API(省钱 + 地图越滚越大)。
+"""
+import json
+import os
+import time
+from pathlib import Path
+
+import requests
+from flask import Flask, jsonify, render_template, request
+
+BASE_DIR = Path(__file__).resolve().parent
+CACHE_FILE = BASE_DIR / "data" / "cache.json"
+
+API_URL = "https://api.deepseek.com/chat/completions"
+API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-flash")  # 漫游要快和便宜,flash 够用;要更聪明改 deepseek-v4-pro
+
+DEFAULT_FLAVOR = "半学习半娱乐,科技/商业/历史/人文乱炖,别太正经"
+
+SYSTEM_PROMPT = """你是一个关键词漫游引擎,帮用户从一个词出发发现有意思的邻近词,用于去视频网站找内容看。
+用户给你一个关键词,你从三个方向扩展:
+- parents(上级):这个词属于什么更大的领域或类别,2~3 个
+- children(下级):这个词的子话题、子类或具体例子,4~8 个
+- similar(相邻):气质相似、经常一起出现、顺着看很自然的词,8~12 个,其中至少 2 个要跳出本领域制造惊喜
+
+要求:
+1. 每个词配一句"勾人说明",不超过 15 个字,说清为什么值得搜来看
+2. 避免输出用户已访问过的词(会在用户消息里给出)
+3. 优先输出具体、有画面感的词,不要输出空泛的大词
+4. 所有词必须是真实存在、能在 B 站/百科搜到实质内容的词或短语;禁止生造词、禁止把两个词临时拼接成新词
+5. 只输出 JSON,格式:
+{"word":"中心词","parents":[{"word":"...","note":"..."}],"children":[{"word":"...","note":"..."}],"similar":[{"word":"...","note":"..."}]}"""
+
+DEEP_SYSTEM_PROMPT = """你是关键词深挖引擎。用户给你一个词,先判断它的类型(事件/人物/概念/技术/作品/地点/组织等),再按类型选择 4~6 个最值得深挖的维度。
+
+不同类型的维度参考(按词的实际情况灵活选择):
+- 事件:起因、关键人物、时间线、地点、后果与影响、相关事件
+- 人物:身份与领域、代表事迹或作品、同时代相关人物、师承与影响、争议点
+- 概念/技术:定义与起源、关键人物、代表实现或案例、相邻概念、常见误解、争议
+- 地点:相关历史事件、文化符号、代表性事物、相关作品
+- 组织:历史沿革、关键人物、代表产品、相关组织、争议点
+
+要求:
+1. 每个维度给 3~6 个词条目,每词配一句"勾人说明",不超过 15 字
+2. 词必须真实存在、能在 B 站/百科搜到实质内容;禁止生造词、禁止拼接新词
+3. 避免输出用户已访问过的词(会在用户消息里给出)
+4. 优先输出具体、有画面感的词
+5. 只输出 JSON,格式:
+{"type":"词的类型","summary":"一句话定位这个词,20字内","dimensions":[{"name":"维度名","items":[{"word":"...","note":"..."}]}]}"""
+
+DETAIL_SYSTEM_PROMPT = """你是词条解释器。用不超过 150 个汉字解释用户给的词,要求:
+1. 说清它是什么、为什么有意思或值得了解,可带一两个关键事实(时间/人物/数字)
+2. 面向好奇但没背景的普通人,信息密度高,不要营销腔,不要堆感叹号
+3. 超过 150 字算失败,宁可砍细节
+4. 只输出 JSON:{"word":"...","detail":"150字以内的解释"}"""
+
+app = Flask(__name__)
+
+
+def load_cache() -> dict:
+    if CACHE_FILE.exists():
+        return json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+    return {}
+
+
+def save_cache(cache: dict) -> None:
+    CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    CACHE_FILE.write_text(
+        json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8"
+    )
+
+
+def parse_llm_json(text: str) -> dict:
+    """从模型返回文本里抠 JSON:容忍 ```json 围栏和思考残留的前后废话。"""
+    text = text.strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end > start:
+        return json.loads(text[start : end + 1])
+    raise json.JSONDecodeError("没找到 JSON", text, 0)
+
+
+def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") -> dict:
+    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。"""
+    visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
+    user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
+    system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
+
+    resp = requests.post(
+        API_URL,
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        json={
+            "model": MODEL,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user_msg},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 1.1,  # 漫游要的是惊喜,调高一点
+            "max_tokens": 4000,  # flash 是思维链模型,思考也吃 token 额度,给足
+        },
+        timeout=90,
+    )
+    resp.raise_for_status()
+    choice = resp.json()["choices"][0]
+    msg = choice["message"]
+
+    content = (msg.get("content") or "").strip()
+    if not content:
+        # flash 是思维链模型:思考在 reasoning_content 里,正文可能为空,兜底去思考内容里捞
+        content = (msg.get("reasoning_content") or "").strip()
+    if not content:
+        raise ValueError(f"模型返回为空(finish_reason={choice.get('finish_reason')})")
+
+    data = parse_llm_json(content)
+
+    # 最小校验,防止模型抽风污染缓存
+    if mode == "basic":
+        for key in ("parents", "children", "similar"):
+            assert isinstance(data.get(key), list), f"模型返回缺少 {key}"
+    elif mode == "deep":
+        assert isinstance(data.get("dimensions"), list) and data["dimensions"], "模型返回缺少 dimensions"
+    else:  # detail
+        assert isinstance(data.get("detail"), str) and data["detail"].strip(), "模型返回缺少 detail"
+        assert len(data["detail"]) <= 300, f"解释超长({len(data['detail'])}字)"
+    return data
+
+
+@app.route("/")
+def index():
+    return render_template("index.html", default_flavor=DEFAULT_FLAVOR)
+
+
+@app.route("/api/expand")
+def expand():
+    if not API_KEY:
+        return jsonify({"error": "未设置 DEEPSEEK_API_KEY 环境变量,设置后重启本程序"}), 500
+
+    word = request.args.get("word", "").strip()
+    if not word:
+        return jsonify({"error": "缺少 word 参数"}), 400
+    if len(word) > 30:
+        return jsonify({"error": "词太长了"}), 400
+
+    flavor = request.args.get("flavor", "").strip() or DEFAULT_FLAVOR
+    mode = request.args.get("mode", "basic")
+    if mode not in ("basic", "deep", "detail"):
+        return jsonify({"error": "mode 只能是 basic / deep / detail"}), 400
+
+    cache = load_cache()
+    entry = cache.get(word)
+
+    # 缓存命中:漫游看词条本身,深挖和详情看词条里嵌的对应字段
+    if entry is not None:
+        if mode == "basic" and entry.get("parents"):
+            return jsonify({"cached": True, "data": entry})
+        if mode == "deep" and entry.get("deep"):
+            return jsonify({"cached": True, "data": entry["deep"]})
+        if mode == "detail" and entry.get("detail"):
+            return jsonify({"cached": True, "data": {"word": word, "detail": entry["detail"]}})
+
+    try:
+        data = call_llm(word, flavor, list(cache.keys()), mode=mode)
+    except requests.RequestException as e:
+        return jsonify({"error": f"API 请求失败:{e}"}), 502
+    except (json.JSONDecodeError, AssertionError, ValueError) as e:
+        return jsonify({"error": f"模型返回解析失败:{e}"}), 502
+
+    if mode == "basic":
+        data["word"] = word
+        data["flavor"] = flavor
+        data["time"] = int(time.time())
+        if entry is not None and entry.get("deep"):
+            data["deep"] = entry["deep"]  # 别把已存的深挖结果冲掉
+        if entry is not None and entry.get("detail"):
+            data["detail"] = entry["detail"]  # 详情同理
+        cache[word] = data
+    else:
+        # 深挖/详情嵌在词条字段里,不污染足迹词表
+        entry = cache.get(word) or {"word": word, "time": int(time.time())}
+        data["word"] = word
+        if mode == "deep":
+            entry["deep"] = data
+        else:
+            entry["detail"] = data["detail"]
+
+        cache[word] = entry
+
+    save_cache(cache)
+    return jsonify({"cached": False, "data": data})
+
+
+@app.route("/api/cache")
+def cache_info():
+    """给前端:已漫游过的词,按最近漫游排序(前端加载历史足迹用)。"""
+    cache = load_cache()
+    words = sorted(
+        ({"word": w, "time": d.get("time") or 0} for w, d in cache.items()),
+        key=lambda x: x["time"],
+        reverse=True,
+    )
+    return jsonify({"count": len(words), "words": [x["word"] for x in words]})
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("ROAM_PORT", "8765"))
+    print(f"关键词漫游器:http://127.0.0.1:{port}   (模型:{MODEL})")
+    app.run(host="127.0.0.1", port=port, debug=False)

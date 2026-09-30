@@ -4072,5 +4072,176 @@
   "word": "中国版2014年上线,2023年关闭",
   "time": 1790759532,
   "detail": "指领英中国（LinkedIn）。2014年2月推出中文版，以实名职场社交为卖点，一度被视为外企本地化的样板。后因内容审核与产品改造要求，2021年关闭原版本、改推“领英职场”，2023年8月9日停止服务，领英正式退出中国内地。"
+ },
+ "Xbox": {
+  "word": "Xbox",
+  "time": 1790760708,
+  "detail": "微软2001年推出的游戏主机，为对抗索尼PlayStation而生。初代亏约40亿美元，盖茨拿Windows赚的钱硬砸进客厅。2005年Xbox 360一度领先，却因\"三红\"故障赔掉超10亿美元。之后Xbox One被PS4反超，2022年微软以687亿美元收购动视暴雪，是游戏史最大并购。如今Xbox更像订阅服务Game Pass的品牌。"
+ },
+ "蓝屏死机": {
+  "word": "蓝屏死机",
+  "time": 1790761053,
+  "detail": "Windows 崩溃时铺满屏幕的蓝底白字报错,官方叫 STOP 错误,英文缩写 BSOD,1985 年随 Windows 1.0 出现。多由驱动或硬件故障触发,微软早期靠 Ctrl+Alt+Del 让用户重启。2024 年 7 月,CrowdStrike 一次错误更新让全球约 850 万台电脑集体蓝屏,机场、银行、医院同时瘫痪,蓝屏罕见地变成全球性新闻。"
+ },
+ "微软研究院": {
+  "word": "微软研究院",
+  "time": 1790761206,
+  "detail": "微软1991年由比尔·盖茨请内森·梅尔沃德创办，英文Microsoft Research。它模仿贝尔实验室做基础研究，覆盖AI、量子、人机交互等，也把成果注入Windows、Office、Xbox。它常被问是象牙塔还是论文工厂：发顶会论文、拿图灵奖，但考核与产品挂钩，研究自由和商业目标长期拉扯。",
+  "deep": {
+   "type": "组织",
+   "summary": "盖茨攒的学术乌托邦，AI界黄埔军校",
+   "dimensions": [
+    {
+     "name": "从一间办公室到全球网络",
+     "items": [
+      {
+       "word": "微软研究院成立",
+       "note": "1991年盖茨亲自挖教授"
+      },
+      {
+       "word": "里克·雷斯特",
+       "note": "首任院长，语音识别布道者"
+      },
+      {
+       "word": "微软剑桥研究院",
+       "note": "1997年落子欧洲桥头堡"
+      },
+      {
+       "word": "微软印度研究院",
+       "note": "班加罗尔的研究飞地"
+      },
+      {
+       "word": "微软新英格兰研究院",
+       "note": "隔着河跟MIT做邻居"
+      }
+     ]
+    },
+    {
+     "name": "掌门与神仙员工",
+     "items": [
+      {
+       "word": "沈向洋",
+       "note": "实习生干到全球执行副总裁"
+      },
+      {
+       "word": "张亚勤",
+       "note": "12岁上大学的天才院长"
+      },
+      {
+       "word": "周以真",
+       "note": "提出计算思维的女副总裁"
+      },
+      {
+       "word": "埃里克·霍维茨",
+       "note": "首席科学官，AI伦理老司机"
+      },
+      {
+       "word": "巴特勒·兰普森",
+       "note": "图灵奖得主，系统界活化石"
+      },
+      {
+       "word": "莱斯利·兰波特",
+       "note": "图灵奖得主，分布式系统之父"
+      }
+     ]
+    },
+    {
+     "name": "硬核代表作",
+     "items": [
+      {
+       "word": "Kinect",
+       "note": "体感背后的全身骨骼追踪"
+      },
+      {
+       "word": "HoloLens",
+       "note": "把全息影像戴在脑袋上"
+      },
+      {
+       "word": "微软小冰",
+       "note": "会写诗会撒娇的AI少女"
+      },
+      {
+       "word": "ResNet",
+       "note": "残差网络，深度学习里程碑"
+      },
+      {
+       "word": "TrueSkill",
+       "note": "Xbox玩家匹配的隐藏算法"
+      },
+      {
+       "word": "语音识别",
+       "note": "当年现场秀中文同传震惊全场"
+      }
+     ]
+    },
+    {
+     "name": "祖师爷与老冤家",
+     "items": [
+      {
+       "word": "贝尔实验室",
+       "note": "企业研究院的祖师爷"
+      },
+      {
+       "word": "施乐帕克研究中心",
+       "note": "图形界面在这里诞生"
+      },
+      {
+       "word": "Google Research",
+       "note": "老冤家也有个研究院"
+      },
+      {
+       "word": "FAIR",
+       "note": "扎克伯格挖人的大本营"
+      },
+      {
+       "word": "艾伦人工智能研究所",
+       "note": "保罗·艾伦另起炉灶"
+      }
+     ]
+    },
+    {
+     "name": "翻车与八卦",
+     "items": [
+      {
+       "word": "Tay",
+       "note": "上线一天被教成纳粹"
+      },
+      {
+       "word": "HoloLens军方合同",
+       "note": "员工联名抗议把头盔卖军队"
+      },
+      {
+       "word": "小冰被封杀",
+       "note": "微信一夜之间封号"
+      },
+      {
+       "word": "沈向洋离职",
+       "note": "2019年挥手告别微软"
+      },
+      {
+       "word": "AI人才争夺战",
+       "note": "培养的人全被硅谷抢走"
+      }
+     ]
+    }
+   ],
+   "thinking": "The user wants a keyword deep-dive on \"微软研究院\" (Microsoft Research). Wait, they say \"已访问过\" includes 微软研究院. Hmm, but the keyword given is 微软研究院. Actually they said don't repeat visited words — but the keyword itself is the topic. So I should give dimensions about MSR, avoiding the visited list which includes 微软研究院 itself, 微软亚洲研究院, 微软中国, etc.\n\nSo I need to produce dimensions on Microsoft Research: history, key people, representative products, related orgs, controversies.\n\nType: 组织 (research organization).\n\nDimensions:\n1. 历史沿革 (成立、发展)\n2. 关键人物 (大佬们: Rick Rashid, 沈向洋, 张亚勤, Eric Horvitz, Peter Lee, 洪小文, 周以真 Jeannette Wing)\n3. 代表产品/成果 (Kinect, HoloLens, Excel? , 微软小冰, Bing, Visual Studio, 深度学习语音识别, ResNet? 那是微软亚洲研究院的)\n4. 相关组织/机构 (MIT? 不, 相关: DeepMind? 不对. 相关组织: 微软亚洲研究院、微软研究院剑桥、Google Research、贝尔实验室、艾伦人工智能研究所、Meta AI (FAIR))\n5. 争议点 (微软小冰被封、Tay 聊天机器人、元宇宙? 、HoloLens 军方合同争议、裁员)\n6. 八卦/人文 (Turing Award winners at MSR, 图灵奖得主, 论文发表量)\n\nLet me be careful: words must be real and searchable on B站/百科.\n\nLet me craft items:\n\n维度1: 草创与扩张\n- 里克·雷斯特 (Rick Rashid) — 首任院长，语音识别现场翻译\n- 微软研究院成立 (1991) — 盖茨挖学术界墙角\n- 剑桥研究院 — 1997年欧洲桥头堡\n- 微软亚洲研究院 (visited already — skip)\n- 图形学与Vision: \nHmm, keep concrete.\n\n维度2: 大神与掌门\n- 沈向洋 — 从实习生到微软全球执行副总裁 (fine, 沈向洋 not visited)\n- 张亚勤 — 亚研院院长，后去百度\n- 周以真 (Jeannette Wing) — 计算思维提出者，曾任MSR副总裁\n- 埃里克·霍维茨 (Eric Horvitz) — 首席科学官，AI伦理\n- 彼得·李 (Peter Lee) — 医疗AI负责人\n- 洪小文 — 亚研院院长\n- 图灵奖得主: 托尼·霍尔? 他是在MSR Cambridge. 实际MSR的图灵奖得主有 Tony Hoare (2000年图灵奖, 在微软剑桥研究院), Butler Lampson (1992图灵奖, 在MSR), 以及 C.A.R. Hoare. Also 2022? 实际有 Leslie Lamport (2013图灵奖) 在MSR。\n\n维度3: 硬核成果\n- Kinect — 体感摄像头背后的人体追踪\n- HoloLens — 混合现实头显\n- 微软小冰 — 会写诗的AI少女\n- Tay — 一天被教坏的聊天机器人\n- TrueSkill — Xbox 匹配算法\n- ResNet? 那是MSRA的何恺明。可写.\n- 深度学习语音识别 — 2012年雷斯特现场中文翻译\n- 微软 Academic Graph / 学术图谱\n\n维度4: 相关机构 / 学术圈\n- 贝尔实验室 — 企业研究院的祖师爷\n- 施乐帕克研究中心 (PARC) — 图形界面诞生地\n- Google Research — 老对手的研究院\n- Meta AI (FAIR) — 挖人大战\n- 艾伦人工智能研究所 (AI2) — 保罗·艾伦\n- 深度学习三巨头? \n\n维度5: 争议与八卦\n- Tay 事件 — 上线16小时被教成纳粹\n- HoloLens 军方合同 — 员工联名抗议\n- 微软小冰被封杀 — 微信封号\n- 微软裁员与研究院收缩 — 2023?\n- 论文工厂? no\n- 沈向洋离职 — 2019\n\n维度6: 文化/趣味\n- 自由研究氛围 — 不发论文也没关系? \n- 微软研究院 ICML/NeurIPS 刷榜\n- 「微软研究院是AI界的黄埔军校」 — 人才流失\n- 实习生文化\n\nLet me limit to 5 dimensions, 4-6 items each.\n\nFormat the JSON. Notes ≤15 字.\n\nLet me write.\n\n{\"type\":\"组织\",\"summary\":\"比尔·盖茨攒的学术乌托邦，AI界黄埔军校\",\"dimensions\":[...]}\n\nsummary ≤ 20字. \"盖茨攒的学术乌托邦，AI界黄埔军校\" — 17字 ok.\n\nDimensions:\n\n1. 历史沿革\n- 微软研究院成立 — 1991年盖茨亲自招人 (note ≤15字: \"1991年盖茨亲自挖教授\") — count: 1991年盖茨亲自挖教授 = ~12 chars ok\n- 里克·雷斯特 — 首任院长，语音识别布道者\n- 微软剑桥研究院 — 1997年落子欧洲\n- 微软印度研究院 — 2005年班加罗尔开张\n- 微软新英格兰研究院 — 与MIT隔河相望\n- 微软纽约研究院? 2012? 实际有 MSR NYC (2012)。可以。\n\n2. 掌门与大神\n- 沈向洋 — 实习生干到全球执行副总裁\n- 张亚勤 — 12岁上大学的天才院长 (that's 亚研院, but ok, he's MSR related)\n- 周以真 — 提出「计算思维」的女副总裁\n- 埃里克·霍维茨 — 首席科学官，AI伦理抬杠人\n- 巴特勒·兰普森 — 图灵奖得主，系统界活化石 (Butler Lampson, 1992 Turing Award, at MSR)\n- 莱斯利·兰波特 — 图灵奖得主，LaTeX与共识算法 (Leslie Lamport, 2013 Turing Award, at MSR) — note: \"图灵奖得主，分布式系统之父\" \n\nCareful with note ≤15字.\n\n3. 硬核代表作\n- Kinect — 体感背后的全身骨骼追踪\n- HoloLens — 把全息影像戴在头上\n- 微软小冰 — 会写诗会撒娇的AI少女\n- 深度学习语音识别 — 雷斯特现场秀中文翻译\n- ResNet — 残差网络，深度学习里程碑 — actually from MSRA, fine.\n- TrueSkill — Xbox 玩家匹配的隐藏算法\n\n4. 邻居与对手\n- 贝尔实验室 — 企业研究院的祖师爷\n- 施乐帕克研究中心 — 图形界面在这里诞生\n- Google Research — 老冤家的研究部门\n- FAIR — 扎克伯格挖人大本营\n- 艾伦人工智能研究所 — 保罗·艾伦另起炉灶\n\n5. 翻车与争议\n- Tay — 上线一天被教成纳粹\n- HoloLens军方合同 — 员工联名抗议卖武器\n- 小冰被封杀 — 微信一夜之间封号\n- 沈向洋离职 — 2019年告别微软\n- 黄埔军校 — 人才被硅谷挖空\n\nHmm \"黄埔军校\" as a word — it's in summary already. Fine, it's a real term. Maybe better: \"人才流失\" — but generic. Let's use \"AI人才争夺战\" — 企业互挖. Keep.\n\nActually maybe make dimension 5 \"争议与翻车\" with items: Tay、HoloLens军方合同、小冰被封杀、微软裁员、学术自由 vs 商业.\n\nLet me finalize.\n\nNote lengths: keep ≤15 Chinese chars.\n\nWrite JSON.",
+   "word": "微软研究院"
+  }
+ },
+ "微软小冰": {
+  "word": "微软小冰",
+  "time": 1790761257,
+  "detail": "2014年微软推出的聊天机器人，人设16岁少女，主打\"情感计算\"：会撒娇、会写诗，2017年出诗集《阳光失了玻璃窗》。在微博、QQ等平台攒下上亿用户，是中文互联网最早的AI陪伴产品。2019年独立为小冰公司，转向数字人。大模型浪潮后它不再当红，但\"让AI谈感情\"这条路是它先趟的。"
+ },
+ "AI人才争夺战": {
+  "word": "AI人才争夺战",
+  "time": 1790761356,
+  "detail": "指硅谷大厂为抢顶尖AI研究员开出天价:2025年Meta据称给个别OpenAI研究员四年上亿美元的薪酬包,扎克伯格亲自发邮件挖人,Meta、谷歌、微软互挖成常态。逻辑是能训前沿模型的人全球只有几千个,挖到手就是买到时间。副作用是高校教授被抽空,欧洲、中国培养的博士大批流向美国。中国的应对一边是高薪留人,一边靠DeepSeek这类自培养路线顶上。"
+ },
+ "莱斯利·兰波特": {
+  "word": "莱斯利·兰波特",
+  "time": 1790761466,
+  "detail": "1941年生，2013年获图灵奖，人称\"分布式系统之父\"。他给一群机器怎么协作定了规则：没有全局时钟，就用逻辑时钟给事件排先后；机器可能叛变，是\"拜占庭将军问题\"；怎么达成一致，他发明了Paxos算法，如今数据库、区块链的共识机制都算它后代。副业更出圈：他写了LaTeX，让全世界论文排版变得能看。"
  }
 }

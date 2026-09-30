@@ -42,9 +42,9 @@ python app.py
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
-| `DEEPSEEK_API_KEY` | (走 DeepSeek 官方时必填) | 本地/自建端点可以不填 |
-| `DEEPSEEK_MODEL` | `deepseek-flash` | 另有 `deepseek-v4-pro`(更聪明更贵);可用模型以 `curl api.deepseek.com/models` 实测为准 |
-| `LLM_BASE_URL` | `https://api.deepseek.com` | **万能插座**:任何 OpenAI 兼容端点都能接,比如 Ollama 填 `http://localhost:11434/v1` |
+| `LLM_BASE_URL` | `https://api.deepseek.com` | **万能插座**:任何 OpenAI 兼容端点都能接(Ollama 填 `http://localhost:11434/v1`) |
+| `LLM_API_KEY` | 无 | 对应端点的 key;未设时回退读 `DEEPSEEK_API_KEY`(本地端点可不填) |
+| `LLM_MODEL` | 未设时回退 `DEEPSEEK_MODEL` → `deepseek-flash` | 模型名必须与该端点的模型列表逐字一致 |
 | `ROAM_PORT` | `8765` | 端口被占时换一个 |
 | `ROAM_MAX_TOKENS` | `8000` | 思维链+正文共用预算;大词(如微软)思考就要两千 token,报"解析失败"可再调大 |
 

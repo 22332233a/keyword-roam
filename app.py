@@ -282,14 +282,20 @@ def ask():
 
 @app.route("/api/cache")
 def cache_info():
-    """给前端:已漫游过的词,按最近漫游排序(前端加载历史足迹用)。"""
+    """足迹:已漫游过的词,按最近漫游排序,带功能标记(前端分类筛选用)。"""
     cache = load_cache()
-    words = sorted(
-        ({"word": w, "time": d.get("time") or 0} for w, d in cache.items()),
-        key=lambda x: x["time"],
-        reverse=True,
-    )
-    return jsonify({"count": len(words), "words": [x["word"] for x in words]})
+    words = []
+    for w, d in cache.items():
+        feats = []
+        if d.get("parents"):
+            feats.append("roam")
+        if d.get("deep"):
+            feats.append("deep")
+        if d.get("detail"):
+            feats.append("detail")
+        words.append({"word": w, "time": d.get("time") or 0, "feats": feats})
+    words.sort(key=lambda x: x["time"], reverse=True)
+    return jsonify({"count": len(words), "words": words})
 
 
 if __name__ == "__main__":

@@ -5,10 +5,12 @@
 
 ## 启动
 
-```powershell
-# 首次:确认环境变量里有 DeepSeek 的 key(本机已设置)
-# $env:DEEPSEEK_API_KEY = "sk-..."   # 没有的话,当前窗口临时设一个
+**方式一(切供应商推荐)**:双击 `启动-自选供应商.bat`,按提示依次粘贴
+BASE_URL、API Key、模型名(它会自动帮你查该端点有哪些模型),回车即启动。
 
+**方式二(默认 DeepSeek)**:直接
+
+```powershell
 python app.py
 # 浏览器打开 http://127.0.0.1:8765
 ```

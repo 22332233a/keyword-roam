@@ -160,10 +160,22 @@ async function toggleDetail(btn, word) {
     const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&mode=detail&flavor=${encodeURIComponent(flavor)}`);
     const body = await resp.json();
     if (!resp.ok) throw new Error(body.error || resp.statusText);
-    box.textContent = body.data.detail;
+    // 模型可能推断出输入实际指向的名称(如句子→领英中国),顺带展示
+    const named = body.data.word && body.data.word !== word ? `【${body.data.word}】` : "";
+    box.textContent = named + body.data.detail;
     box.dataset.loaded = "1";
   } catch (err) {
-    box.textContent = "出错:" + err.message;
+    // 详情偶发解析失败(句式输入尤其),自动降级为追问式解释,保证有答案
+    try {
+      const q = `解释这个说法(它出自关于「${currentWord}」的介绍):「${word}」`;
+      const resp2 = await fetch(`/api/ask?word=${encodeURIComponent(currentWord)}&q=${encodeURIComponent(q)}`);
+      const body2 = await resp2.json();
+      if (!resp2.ok) throw new Error(body2.error || resp2.statusText);
+      box.textContent = body2.data.answer + "\n(降级为追问式解释)";
+      box.dataset.loaded = "1";
+    } catch (err2) {
+      box.textContent = "出错:" + (err2.message || err.message);
+    }
   }
 }
 function col(title, items) {

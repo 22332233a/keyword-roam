@@ -155,10 +155,13 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2)
     raise last_err
 
 
-def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") -> dict:
-    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。"""
+def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ctx: str = "") -> dict:
+    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。
+    ctx:输入所在的介绍片段,句式输入推断指向时用。"""
     visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
     user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
+    if ctx:
+        user_msg += f"\n它出自的介绍片段:{ctx}"
     system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
     temperature = 0.7 if mode == "detail" else 1.1  # 详情/追问求准,漫游求惊喜
 
@@ -212,7 +215,8 @@ def expand():
             return jsonify({"cached": True, "data": {"word": word, "detail": entry["detail"]}})
 
     try:
-        data = call_llm(word, flavor, list(cache.keys()), mode=mode)
+        ctx = request.args.get("ctx", "").strip()[:600]
+        data = call_llm(word, flavor, list(cache.keys()), mode=mode, ctx=ctx)
     except requests.RequestException as e:
         return jsonify({"error": f"API 请求失败:{e}"}), 502
     except (json.JSONDecodeError, AssertionError, ValueError) as e:

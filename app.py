@@ -177,19 +177,8 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2)
     raise last_err
 
 
-def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ctx: str = "") -> dict:
-    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。
-    ctx:输入所在的介绍片段,句式输入推断指向时用。"""
-    visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
-    user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
-    if ctx:
-        user_msg += f"\n它出自的介绍片段:{ctx}"
-    system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
-    temperature = 0.7 if mode == "detail" else 1.1  # 详情/追问求准,漫游求惊喜
-
-    data, reasoning = chat(system, user_msg, temperature=temperature)
-
-    # 最小校验,防止模型抽风污染缓存
+def _validate(data: dict, mode: str, word: str, reasoning: str) -> None:
+    """最小校验,防止模型抽风污染缓存;不过关就抛错,由 call_llm 重掷。"""
     if mode == "basic":
         for key in ("parents", "children", "similar"):
             assert isinstance(data.get(key), list), f"模型返回缺少 {key}"
@@ -203,7 +192,29 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ct
         if not data["detail"].rstrip().endswith(END_PUNCT):
             # 句子结尾不是句号类标点:多半是话说一半(预算截断或模型自己断片)
             log_abnormal("详情疑似腰斩", word, f"结尾:{data['detail'][-60:]!r}")
-    return data
+            raise ValueError("详情话说一半,重掷一次")
+
+
+def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ctx: str = "") -> dict:
+    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。
+    ctx:输入所在的介绍片段,句式输入推断指向时用。
+    校验不过(字段缺失/详情腰斩)自动重掷一次——温度高就是掷骰子,重掷通常就好。"""
+    visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
+    user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
+    if ctx:
+        user_msg += f"\n它出自的介绍片段:{ctx}"
+    system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
+    temperature = 0.7 if mode == "detail" else 1.1  # 详情/追问求准,漫游求惊喜
+
+    last_err: Exception = ValueError("未执行")
+    for _attempt in range(2):
+        data, reasoning = chat(system, user_msg, temperature=temperature)
+        try:
+            _validate(data, mode, word, reasoning)
+            return data
+        except (AssertionError, ValueError) as e:
+            last_err = e
+    raise last_err
 
 
 @app.route("/")

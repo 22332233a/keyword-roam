@@ -101,9 +101,12 @@
   .r-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: left; }
   .r-grid h4 { font-size: 12px; color: #6a6f7c; margin-bottom: 6px; letter-spacing: 1px; }
   .r-item { border: 1px solid #2a2e3a; border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; }
-  .r-item .rw { cursor: pointer; font-weight: 600; font-size: 13px; }
+  .r-item .rrow { display: flex; align-items: center; gap: 8px; }
+  .r-item .rw { cursor: pointer; font-weight: 600; font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
   .r-item .rw:hover { color: #7d9dff; }
   .r-item.seen .rw { color: #5da97a; }
+  .r-item .rb { margin-left: auto; flex-shrink: 0; font-size: 11px; color: #5b83d6; text-decoration: none; }
+  .r-item .rb:hover { text-decoration: underline; color: #7d9dff; }
   .r-item .note { font-size: 11px; color: #8a8f9c; margin-top: 2px; }
   @media (max-width: 900px) { .r-grid { grid-template-columns: 1fr; } }
   #history { max-width: 1600px; margin: 30px auto 0; }
@@ -413,7 +416,10 @@ function renderRoamData(box, d) {
     const seen = visited.has(it.word) ? " seen" : "";
     const w = esc(it.word).replace(/'/g, "\\'");
     return `<div class="r-item${seen}">
-      <span class="rw" onclick="goWord('${w}')">${esc(it.word)}</span>
+      <div class="rrow">
+        <span class="rw" onclick="goWord('${w}')">${esc(it.word)}</span>
+        <a class="rb" href="https://search.bilibili.com/all?keyword=${encodeURIComponent(it.word)}" target="_blank" title="去B站搜这个词">B站▶</a>
+      </div>
       <div class="note">${esc(it.note)}</div>
     </div>`;
   };

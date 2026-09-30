@@ -2785,13 +2785,407 @@
  },
  "DeepSeek": {
   "word": "DeepSeek",
-  "time": 1790755751,
-  "detail": "中国AI公司深度求索，2023年由量化基金幻方孵化，创始人梁文锋。2025年1月发布开源推理模型R1，性能对标OpenAI o1，训练成本据称仅数百万美元。模型权重公开可下载，开发者能自己部署。发布当天英伟达股价暴跌约17%，被视为开源路线对闭源巨头的一次突袭。"
+  "parents": [
+   {
+    "word": "中国大模型",
+    "note": "国产AI的门面担当"
+   },
+   {
+    "word": "开源大模型",
+    "note": "免费改代码的狂欢"
+   },
+   {
+    "word": "量化投资",
+    "note": "炒股赚的钱拿去造AI"
+   }
+  ],
+  "children": [
+   {
+    "word": "DeepSeek-R1",
+    "note": "开源推理模型炸翻全网"
+   },
+   {
+    "word": "DeepSeek-V3",
+    "note": "671B参数只花550万训"
+   },
+   {
+    "word": "蒸馏争议",
+    "note": "被指偷学OpenAI的嘴仗"
+   },
+   {
+    "word": "幻方量化",
+    "note": "靠炒股养AI的神秘金主"
+   },
+   {
+    "word": "本地部署",
+    "note": "笔记本跑大模型实操"
+   },
+   {
+    "word": "免费API",
+    "note": "白菜价打崩同行定价"
+   },
+   {
+    "word": "梁文锋",
+    "note": "低调85后创始人的采访"
+   },
+   {
+    "word": "中美AI差距",
+    "note": "一夜之间被重新讨论"
+   }
+  ],
+  "similar": [
+   {
+    "word": "萤火二号",
+    "note": "幻方自研的万卡算力怪兽"
+   },
+   {
+    "word": "量化私募",
+    "note": "数学天才的另一条出路"
+   },
+   {
+    "word": "OpenRouter",
+    "note": "一键切换各家模型的入口"
+   },
+   {
+    "word": "Ollama",
+    "note": "三分钟跑起本地AI"
+   },
+   {
+    "word": "Kimi",
+    "note": "与DeepSeek缠斗的国产兄弟"
+   },
+   {
+    "word": "奥特曼回应",
+    "note": "对手发推连夜加班的梗"
+   },
+   {
+    "word": "价格战",
+    "note": "从外卖到API的降维打击"
+   },
+   {
+    "word": "杭州六小龙",
+    "note": "宇树、群核同框创业天团"
+   },
+   {
+    "word": "英伟达股价",
+    "note": "被一个开源模型吓崩"
+   },
+   {
+    "word": "宁波天团",
+    "note": "量化大佬们的江湖"
+   },
+   {
+    "word": "推理模型",
+    "note": "会打草稿的AI有多猛"
+   }
+  ],
+  "flavor": "半学习半娱乐,科技/商业/历史/人文乱炖,别太正经",
+  "time": 1790769006,
+  "detail": "中国AI公司深度求索，2023年由量化基金幻方孵化，创始人梁文锋。2025年1月发布开源推理模型R1，性能对标OpenAI o1，训练成本据称仅数百万美元。模型权重公开可下载，开发者能自己部署。发布当天英伟达股价暴跌约17%，被视为开源路线对闭源巨头的一次突袭。",
+  "deep": {
+   "type": "技术",
+   "summary": "中国开源大模型黑马，搅动全球AI格局",
+   "dimensions": [
+    {
+     "name": "幕后团队与金主",
+     "items": [
+      {
+       "word": "幻方量化",
+       "note": "千亿量化基金养出的AI"
+      },
+      {
+       "word": "梁文锋",
+       "note": "幻方掌门，DeepSeek之父"
+      },
+      {
+       "word": "萤火集群",
+       "note": "万卡自研算力底座"
+      },
+      {
+       "word": "杭州未来科技城",
+       "note": "低调总部所在地"
+      },
+      {
+       "word": "量化私募",
+       "note": "不靠融资靠炒股的钱"
+      }
+     ]
+    },
+    {
+     "name": "代表模型与技术",
+     "items": [
+      {
+       "word": "DeepSeek-R1",
+       "note": "推理封神，开源即王炸"
+      },
+      {
+       "word": "DeepSeek-V3",
+       "note": "671亿参数白菜价训练"
+      },
+      {
+       "word": "DeepSeek-V2",
+       "note": "MLA架构引发价格战"
+      },
+      {
+       "word": "混合专家模型MoE",
+       "note": "只激活部分神经元省钱"
+      },
+      {
+       "word": "思维链",
+       "note": "AI学会打草稿再答题"
+      },
+      {
+       "word": "强化学习训练",
+       "note": "自己琢磨出解题套路"
+      }
+     ]
+    },
+    {
+     "name": "争议与名场面",
+     "items": [
+      {
+       "word": "蒸馏争议",
+       "note": "被指偷学OpenAI作业"
+      },
+      {
+       "word": "算力出口管制",
+       "note": "没有A100也能炼丹"
+      },
+      {
+       "word": "百模价格战",
+       "note": "一开口就是骨折价"
+      },
+      {
+       "word": "硅谷恐慌",
+       "note": "美股单日蒸发万亿"
+      },
+      {
+       "word": "苹果急寻补救",
+       "note": "库克连夜开会"
+      }
+     ]
+    },
+    {
+     "name": "相邻概念",
+     "items": [
+      {
+       "word": "开源大模型",
+       "note": "代码全公开的豪赌"
+      },
+      {
+       "word": "AGI通用人工智能",
+       "note": "公司自述的终极目标"
+      },
+      {
+       "word": "推理成本",
+       "note": "大模型落地的生死线"
+      },
+      {
+       "word": "国产算力芯片",
+       "note": "禁令下的备胎计划"
+      },
+      {
+       "word": "AI军备竞赛",
+       "note": "谁先烧完谁先输"
+      }
+     ]
+    },
+    {
+     "name": "中国大模型同桌",
+     "items": [
+      {
+       "word": "智谱AI",
+       "note": "清华系老大哥"
+      },
+      {
+       "word": "月之暗面Kimi",
+       "note": "靠长文本出圈"
+      },
+      {
+       "word": "文心一言",
+       "note": "百度押注的牌面"
+      },
+      {
+       "word": "通义千问",
+       "note": "阿里开源狂魔"
+      },
+      {
+       "word": "阶跃星辰",
+       "note": "低调的独角兽"
+      }
+     ]
+    },
+    {
+     "name": "必看科普",
+     "items": [
+      {
+       "word": "为什么叫DeepSeek",
+       "note": "名字背后的创业梗"
+      },
+      {
+       "word": "万卡集群怎么建",
+       "note": "GPU堆成的数据中心"
+      },
+      {
+       "word": "量化与AI的化学反应",
+       "note": "同一批人的第二战场"
+      }
+     ]
+    }
+   ],
+   "thinking": "The user wants DeepSeek related keywords. Type: 组织/技术. Let me pick dimensions.\n\nDeepSeek: 深度求索，杭州公司，幻方量化，梁文锋，V3, R1, 蒸馏争议, 算力卡，A100/H800，开源，价格战，Sputnik moment.\n\nDimensions:\n1. 背后团队与公司: 幻方量化, 深度求索(公司), 梁文锋, 萤火集群, High-Flyer, 杭州\n2. 代表模型/产品: DeepSeek-R1, DeepSeek-V3, DeepSeek-V2, DeepSeek-Coder, Janus(多模态), 思维链\n3. 争议与影响: 蒸馏争议, 算力禁令, 百亿补贴/价格战, 蒸馏OpenAI, 美国安全审查, Sputnik时刻\n4. 相邻概念: 开源大模型, MoE(混合专家), 蒸馏, 强化学习, AGI, 量化基金\n5. 商业/资本: 量化交易, 幻方\"换方\", GPU囤积, 算力租赁\n6. 中国AI公司: 智谱AI, 月之暗面, 百川智能, MiniMax, 阶跃星辰, 字节豆包\n\nNote avoid visited: ChatGPT, AI人才争夺战, 对齐问题 etc. None conflict.\n\nKeep notes ≤15 chars.\n\nLet me craft.\n\n\"梁文锋\" note: 幻方掌门，DeepSeek之父 (12 chars ok)\n\"幻方量化\" note: 千亿量化基金养AI (ok)\n\"萤火集群\" note: 万卡自研算力底座\n\"换方\" maybe skip.\n\nEvents: \"V3发布震动硅谷\", \"R1开源引爆全球\", \"蒸馏争议\", \"算力出口管制\", \"百模价格战\", \"OpenAI指控蒸馏\"\n\nOk let's write JSON.",
+   "word": "DeepSeek"
+  }
  },
  "OpenAI": {
   "word": "OpenAI",
   "time": 1790755762,
-  "detail": "2015年由马斯克、奥尔特曼等人创立，起初是非营利机构，2019年改设有限营利并拿了微软10亿美元。2022年11月ChatGPT上线，两个月破亿用户，点燃全球AI热潮。2023年11月董事会突然解雇奥尔特曼，五天后又把他请回来。名字里的Open如今常被吐槽：从GPT-4起就不再公开模型细节了。"
+  "detail": "2015年由马斯克、奥尔特曼等人创立，起初是非营利机构，2019年改设有限营利并拿了微软10亿美元。2022年11月ChatGPT上线，两个月破亿用户，点燃全球AI热潮。2023年11月董事会突然解雇奥尔特曼，五天后又把他请回来。名字里的Open如今常被吐槽：从GPT-4起就不再公开模型细节了。",
+  "deep": {
+   "type": "组织",
+   "summary": "从非营利乌托邦到AI霸主的魔幻创业史",
+   "dimensions": [
+    {
+     "name": "历史沿革",
+     "items": [
+      {
+       "word": "2015年非营利成立",
+       "note": "马斯克、奥特曼牵头的AI乌托邦"
+      },
+      {
+       "word": "董事会政变",
+       "note": "6小时罢免CEO的宫斗大戏"
+      },
+      {
+       "word": "非营利转营利重组",
+       "note": "使命漂移还是活下去？"
+      },
+      {
+       "word": "Stargate数据中心",
+       "note": "5000亿美元的算力豪赌"
+      },
+      {
+       "word": "GPT-1论文时代",
+       "note": "还叫OpenAI Playground的日子"
+      }
+     ]
+    },
+    {
+     "name": "关键人物",
+     "items": [
+      {
+       "word": "山姆·奥特曼",
+       "note": "被罢免又杀回来的CEO"
+      },
+      {
+       "word": "伊尔亚·苏茨克维",
+       "note": "出走另立门户的联合创始人"
+      },
+      {
+       "word": "Greg Brockman",
+       "note": "陪CEO一起辞职的总裁"
+      },
+      {
+       "word": "米拉·穆拉蒂",
+       "note": "临危受命的CTO"
+      },
+      {
+       "word": "海伦·托纳",
+       "note": "投罢免票的董事科学家"
+      },
+      {
+       "word": "马斯克诉OpenAI",
+       "note": "创始人反目对簿公堂"
+      }
+     ]
+    },
+    {
+     "name": "代表产品",
+     "items": [
+      {
+       "word": "ChatGPT",
+       "note": "两个月破亿的现象级产品"
+      },
+      {
+       "word": "Sora",
+       "note": "一句prompt生成电影感视频"
+      },
+      {
+       "word": "DALL·E",
+       "note": "AI画图的开山鼻祖之一"
+      },
+      {
+       "word": "Whisper",
+       "note": "转录语音的开源神器"
+      },
+      {
+       "word": "OpenAI Five",
+       "note": "打Dota击败职业选手的AI"
+      },
+      {
+       "word": "Codex",
+       "note": "GitHub Copilot的幕后大脑"
+      }
+     ]
+    },
+    {
+     "name": "相关组织",
+     "items": [
+      {
+       "word": "Y Combinator",
+       "note": "奥特曼的老东家孵化器"
+      },
+      {
+       "word": "英伟达",
+       "note": "军火商黄仁勋的算力帝国"
+      },
+      {
+       "word": "软银",
+       "note": "孙正义押注AGI的野心"
+      },
+      {
+       "word": "DeepMind",
+       "note": "同门前辈谷歌AI实验室"
+      },
+      {
+       "word": "甲骨文",
+       "note": "云服务合作方的神来之笔"
+      }
+     ]
+    },
+    {
+     "name": "争议点",
+     "items": [
+      {
+       "word": "斯嘉丽声音门",
+       "note": "未经同意用嗓音惹官司"
+      },
+      {
+       "word": "超级对齐团队解散",
+       "note": "安全团队核心集体出走"
+      },
+      {
+       "word": "前员工封口协议",
+       "note": "离职不准说公司坏话"
+      },
+      {
+       "word": "Q*模型传闻",
+       "note": "疑似突破引发内部恐慌"
+      },
+      {
+       "word": "营利化争议",
+       "note": "慈善外壳该不该拆"
+      },
+      {
+       "word": "AI末日论",
+       "note": "一边造神一边喊危险"
+      }
+     ]
+    }
+   ],
+   "thinking": "The user wants OpenAI deep-dive keywords, avoiding listed ones. Type: 组织 (organization). Dimensions: 历史沿革, 关键人物, 代表产品, 相关组织, 争议点, plus maybe 商业模式/资本.\n\nAvoid: 红队测试, 模型卡, Anthropic, Grok, 对齐问题, 纽约时报诉OpenAI, 微软, AI人才争夺战...\n\nGive 4-6 dimensions, 3-6 items each, with catchy short notes ≤15 chars.\n\nIdeas:\n历史沿革: 非营利成立2015, Sam Altman被罢免事件(2023董事会政变), 从非营利到营利重组, Stargate项目? \n关键人物: 山姆·奥特曼, 伊尔亚·苏茨克维, Greg Brockman, 米拉·穆拉蒂, 扬·塔利, 海伦·托纳(已离开? she's OpenAI board member) — 海伦·托纳\n代表产品: ChatGPT, Sora, DALL·E, GPT-4, Whisper, Codex, CLIP, Gym(OpenAI Gym), 强化学习打Dota(OpenAI Five)\n相关组织: Y Combinator, DeepMind, 硅谷银行? 算力联盟? 相关: 火焰之海? Let's use: Y Combinator, DeepMind, Rebrand? 甲骨文, 英伟达, 软银 — Stargate投资方。\n争议点: 罢免风波, Q*模型传闻, 版权诉讼(已访问纽约时报, 可用 Getty诉OpenAI? 那是Stability), 非营利使命漂移, Scarlett Johansson声音争议(天哪那个), 前员工离职封口协议(Nекс?); 六小时? \"超级对齐团队解散\"(与对齐问题不同词, 可能ok), 伊尔亚出走创建SSI。\n商业: 微软投资已访问, 用\"400亿美元融资\", \"亏损\", \"ChatGPT周活\" \n\nLet's craft:\n\ntype: 组织\nsummary: 非营利起家的AI巨头,如今定义了时代\n\nDimensions:\n1. 历史沿革 — 2015年非营利成立、2023董事会政变、非营利转营利重组、2019微软百亿美元投资(微软已访问作为词, 但作为说明没问题? note里提微软应该可以, avoid word as item)、GPT-1论文、Stargate数据中心\n2. 关键人物 — 山姆·奥特曼、伊尔亚·苏茨克维、Greg Brockman、米拉·穆拉蒂、海伦·托纳、扬·塔利\n3. 代表产品 — ChatGPT、Sora、DALL·E、Whisper、GPT-4、Codex\n4. 相关组织 — Y Combinator、DeepMind、英伟达、软银、甲骨文、Anthropic(已访问, skip)\n5. 争议点 — 奥特曼遭罢免、斯嘉丽声音门、超级对齐团队解散、前员工封口协议、Q*模型传闻、营利化争议\n6. 娱乐梗 — 网友玩梗? \"ChatGPT命名梗\"? maybe \"AGI焦虑\", \"AI末日论\", \"Elon Musk与OpenAI诉讼\"(马斯克诉OpenAI) — good item.\n\n马斯克诉OpenAI: real, searchable.\n\nLet's ensure items 3-6 per dim, notes ≤15 chars.\n\nOutput JSON only.",
+   "word": "OpenAI"
+  }
  },
  "AGI": {
   "word": "AGI",
@@ -4258,5 +4652,784 @@
   "word": "软件产业",
   "time": 1790762774,
   "detail": "指以开发、销售软件为核心的行业。1969年IBM把软件从硬件中拆出来单独计费，被视为该产业的起点；此后微软靠卖同一份代码的授权（复制成本近乎为零）奠定了高毛利玩法。如今订阅制、开源和云服务正在改写‘卖授权’的老规矩。"
+ },
+ "苹果公司": {
+  "word": "苹果公司",
+  "parents": [
+   {
+    "word": "消费电子",
+    "note": "手机耳机如何变成生活必需品"
+   },
+   {
+    "word": "硅谷",
+    "note": "车库到帝国的地理密码"
+   },
+   {
+    "word": "科技硬件",
+    "note": "造机器比写代码更难在哪"
+   }
+  ],
+  "children": [
+   {
+    "word": "iPhone",
+    "note": "一部手机如何掀翻整个行业"
+   },
+   {
+    "word": "Mac",
+    "note": "苹果电脑的三十年起落"
+   },
+   {
+    "word": "苹果自研芯片",
+    "note": "英特尔换芯的惊险一跃"
+   },
+   {
+    "word": "Vision Pro",
+    "note": "库克的下一个赌注值不值"
+   },
+   {
+    "word": "App Store抽成",
+    "note": "苹果税凭什么收30%"
+   },
+   {
+    "word": "苹果零售店",
+    "note": "玻璃房子如何卖货"
+   },
+   {
+    "word": "AirPods",
+    "note": "一个槽点如何变成潮流"
+   },
+   {
+    "word": "苹果发布会",
+    "note": "十年名场面逐帧盘点"
+   }
+  ],
+  "similar": [
+   {
+    "word": "乔布斯",
+    "note": "三分钟看懂现实扭曲力场"
+   },
+   {
+    "word": "蒂姆·库克",
+    "note": "供应链大师怎么接手苹果"
+   },
+   {
+    "word": "诺基亚",
+    "note": "巨头倒下只用了五年"
+   },
+   {
+    "word": "iPhone发布会",
+    "note": "重新定义手机的那一夜"
+   },
+   {
+    "word": "皮克斯",
+    "note": "乔布斯的第二场豪赌"
+   },
+   {
+    "word": "包豪斯",
+    "note": "看懂苹果极简美学的源头"
+   },
+   {
+    "word": "富士康",
+    "note": "苹果背后的百万工人"
+   },
+   {
+    "word": "Think Different",
+    "note": "一句广告词如何定义品牌"
+   },
+   {
+    "word": "苹果牛顿",
+    "note": "失败掌机如何预言iPhone"
+   },
+   {
+    "word": "任天堂",
+    "note": "软硬一体赚钱的老玩家"
+   },
+   {
+    "word": "史蒂夫·沃兹尼亚克",
+    "note": "被低估的苹果真正创始人"
+   },
+   {
+    "word": "极简主义",
+    "note": "少即是多为何越看越上头"
+   }
+  ],
+  "flavor": "半学习半娱乐,科技/商业/历史/人文乱炖,别太正经",
+  "time": 1790763312,
+  "deep": {
+   "type": "组织",
+   "summary": "从车库到三万亿,苹果的产品与争议史",
+   "dimensions": [
+    {
+     "name": "创业与权力更迭",
+     "items": [
+      {
+       "word": "罗纳德·韦恩",
+       "note": "10%股份换500块,最贵退股人"
+      },
+      {
+       "word": "Apple II",
+       "note": "让苹果第一次真正赚到钱"
+      },
+      {
+       "word": "1985年乔布斯被逐",
+       "note": "亲手赶走创始人,董事会名场面"
+      },
+      {
+       "word": "约翰·斯卡利",
+       "note": "百事总裁,被乔布斯一句话挖来"
+      },
+      {
+       "word": "1997年乔布斯回归",
+       "note": "苹果离破产只剩90天"
+      },
+      {
+       "word": "蒂姆·库克",
+       "note": "供应链大师,接棒后市值翻十倍"
+      }
+     ]
+    },
+    {
+     "name": "改变世界的产品",
+     "items": [
+      {
+       "word": "Macintosh",
+       "note": "1984年开机笑脸,贵到吓人"
+      },
+      {
+       "word": "iMac G3",
+       "note": "半透明糖果色,救活苹果的船"
+      },
+      {
+       "word": "Power Mac G4 Cube",
+       "note": "美到封神,销量惨到停产"
+      },
+      {
+       "word": "iPod",
+       "note": "把一千首歌塞进口袋"
+      },
+      {
+       "word": "iPhone",
+       "note": "一部手机干翻整个行业"
+      },
+      {
+       "word": "Apple Watch",
+       "note": "从时尚配件到健康设备"
+      }
+     ]
+    },
+    {
+     "name": "生态与赚钱机器",
+     "items": [
+      {
+       "word": "App Store",
+       "note": "抽成三成的数字地租"
+      },
+      {
+       "word": "苹果税",
+       "note": "全球监管盯上的那30%"
+      },
+      {
+       "word": "Apple Silicon",
+       "note": "自研芯片,英特尔被踢出局"
+      },
+      {
+       "word": "天才吧",
+       "note": "零售店里的维修朝圣台"
+      },
+      {
+       "word": "Apple Park",
+       "note": "乔布斯生前最后一份图纸"
+      }
+     ]
+    },
+    {
+     "name": "争议与黑历史",
+     "items": [
+      {
+       "word": "降速门",
+       "note": "老iPhone被系统故意拖慢"
+      },
+      {
+       "word": "蝴蝶键盘",
+       "note": "打字掉键,四年不认账"
+      },
+      {
+       "word": "Epic诉苹果",
+       "note": "游戏厂商正面硬刚应用商店"
+      },
+      {
+       "word": "高通专利战",
+       "note": "专利费打到全球互告"
+      },
+      {
+       "word": "天线门",
+       "note": "握住就掉线,乔布斯说别这么握"
+      },
+      {
+       "word": "苹果与Flash",
+       "note": "一句封杀,直接弄死它"
+      }
+     ]
+    },
+    {
+     "name": "广告与文化符号",
+     "items": [
+      {
+       "word": "1984超级碗广告",
+       "note": "砸碎老大哥,一分钟封神"
+      },
+      {
+       "word": "Think Different",
+       "note": "向所有疯子致敬的宣言"
+      },
+      {
+       "word": "One more thing",
+       "note": "发布会最会吊胃口的四个字"
+      },
+      {
+       "word": "黑色高领衫",
+       "note": "乔布斯的制服式审美"
+      },
+      {
+       "word": "拟物化设计",
+       "note": "斯卡尔的皮革与木纹时代"
+      },
+      {
+       "word": "iPod剪影广告",
+       "note": "白色耳机甩头甩出来的潮流"
+      }
+     ]
+    },
+    {
+     "name": "中国与粉丝江湖",
+     "items": [
+      {
+       "word": "卖肾换iPhone",
+       "note": "少年为手机卖掉一颗肾"
+      },
+      {
+       "word": "华强北",
+       "note": "全球苹果配件的平行宇宙"
+      },
+      {
+       "word": "富士康郑州厂",
+       "note": "iPhone诞生的流水线巨兽"
+      },
+      {
+       "word": "果粉与安卓党",
+       "note": "互联网吵了十几年的鄙视链"
+      },
+      {
+       "word": "黄牛炒新机",
+       "note": "开售日排队的古老传统"
+      },
+      {
+       "word": "苹果中国官网",
+       "note": "学生优惠与返校季的薅羊毛"
+      }
+     ]
+    }
+   ],
+   "thinking": "The user wants keywords related to Apple Inc. Let me pick dimensions: 历史沿革/关键人物/代表产品/争议点/竞争与生态/文化符号. Avoid visited words (微软系列). Let's pick 4-6 dimensions with 3-6 items each.\n\nLet's do:\n1. 创始与关键人物: 史蒂夫·乔布斯, 史蒂夫·沃兹尼亚克, 罗纳德·韦恩, 约翰·斯卡利, 蒂姆·库克, 乔纳森·艾维\n2. 代表产品: Apple II, Macintosh, iMac G3, iPod, iPhone, 玻璃曲面垃圾桶(Mac Pro 2013) — better \"Power Mac G4 Cube\"\n3. 商业与法律争议: 天价擦屏费(Apple维修争议)? Let's use: 苹果税, Epic诉苹果, 高通专利战, 降速门, 蝴蝶键盘, Find My? \n4. 竞争与生态: App Store, Apple Silicon, 健康码? no. 苹果与Adobe Flash战争, Think Different, 苹果设计大奖?\n5. 文化与历史事件: 1984年超级碗广告, \"1984\"广告, 老大哥IBM, 1997年\"非同凡想\"广告, 苹果发布会\"One more thing\", 纽约第五大道玻璃店, 苹果飞船总部Apple Park\n6. 中文梗/娱乐: 苹果客服? \"果粉\" vs \"安卓党\" 鄙视链, 华强北? Actually good: \"iPhone 卖肾换手机\" 事件.\n\nLet's craft carefully with real, searchable entries.\n\nDimensions (6):\n1. 创业与权力更迭 — Apple II、1985乔布斯被逐、1997回归、约翰·斯卡利、罗纳德·韦恩\n2. 改变世界的产品 — Macintosh、iMac G3、iPod、iPhone、Apple Watch、Power Mac G4 Cube\n3. 生态与商业机器 — App Store、苹果税、Apple Silicon、库比蒂诺、以旧换新? Better: 苹果零售店( Genius Bar 天才吧)、Apple Park\n4. 争议与黑历史 — 降速门、蝴蝶键盘、天线门、Epic诉苹果、高通专利战、\"色情光盘\"史蒂夫·乔布斯早期? (iPod click wheel? skip)\n5. 广告与文化符号 — \"1984\"超级碗广告、Think Different、One more thing、1997 IBM-苹果广告? Let's: 老大哥IBM、Think Different、\"非同凡想\"、乔布斯的黑色高领衫、苹果发布会表情包、iOS 拟物化设计(Scott Forstall)\n6. 中国与粉丝文化 — 卖肾买iPhone、果粉、华强北、富士康郑州工厂、iPhone 4 黄牛? maybe 苹果官网教育优惠? \"苹果中国税\"? Let's use: 卖肾换iPhone、果粉与安卓党、富士康、华强北、iPhone 4 天线门 already used. Add \"新疆\"? no.\n\nKeep items 3-6 each. Write JSON.\n\nNote summary ≤20字: \"从车库到3万亿,苹果的产品与争议史\".\n\nCheck visited: no conflicts.\n\nFor \"1985年乔布斯出走苹果\" as a word — it's a phrase but real event, searchable. Fine.\n\nItems notes ≤15字.",
+   "word": "苹果公司"
+  }
+ },
+ "Epic诉苹果": {
+  "word": "Epic诉苹果",
+  "time": 1790765091,
+  "detail": "2020年游戏《堡垒之夜》开发商Epic绕过苹果App Store内购抽成（30%），被苹果下架后直接起诉。2021年判决：苹果不算垄断，但必须允许开发者在App里放外部支付链接。本质是应用商店‘苹果税’之争，至今仍有后续上诉，牵动全球应用商店抽成规则。"
+ },
+ "苹果税": {
+  "word": "苹果税",
+  "time": 1790765104,
+  "detail": "指苹果对App Store内应用的数字消费抽取的分成，通常是30%，小游戏、订阅第二年起降到15%。开发者想在iOS上收钱基本绕不开它，等于苹果坐收过路费。全球多国监管和Epic等公司都在围攻这一规则，部分司法区已强制开放第三方支付。"
+ },
+ "黑屏事件": {
+  "word": "黑屏事件",
+  "time": 1790765226,
+  "detail": "2007年微软借Windows正版增值计划（WGA）联网验证，未通过的盗版XP/Vista用户桌面被强制刷成纯黑，每小时重置一次，角标提示"
+ },
+ "果粉与安卓党": {
+  "word": "果粉与安卓党",
+  "time": 1790765319,
+  "detail": "指苹果用户与安卓用户两大阵营，双方从系统体验、拍照、生态吵到「谁更高级」，形成中国互联网著名的鄙视链之一。约2007年iPhone发布、2008年安卓跟进后成形，持续十几年，常伴随「卡不卡」「要不要越狱」等口水战。本质是品牌认同之争：花多少钱、用什么系统，成了社交身份标签。如今折叠屏、AI功能又添了新战场。"
+ },
+ "网络安全": {
+  "word": "网络安全",
+  "time": 1790765351,
+  "detail": "指保护网络系统、数据不被窃取或破坏的技术与博弈，本质是攻防双方的猫鼠游戏：一边修补漏洞、一边寻找漏洞。常涉及黑客攻击、钓鱼、勒索病毒等。2017年WannaCry勒索病毒波及150国，堪称标志性事件。"
+ },
+ "社会工程学": {
+  "word": "社会工程学",
+  "time": 1790765414,
+  "deep": {
+   "type": "概念",
+   "summary": "用骗术绕过技术防线的人心攻击术",
+   "dimensions": [
+    {
+     "name": "代表人物",
+     "items": [
+      {
+       "word": "凯文·米特尼克",
+       "note": "FBI头号通缉的传奇骗子"
+      },
+      {
+       "word": "罗伯特·西奥迪尼",
+       "note": "把说服写成科学的人"
+      },
+      {
+       "word": "阿德里安·拉莫",
+       "note": "流浪汉黑进纽约时报"
+      },
+      {
+       "word": "下村努",
+       "note": "物理学家亲手抓米特尼克"
+      },
+      {
+       "word": "克里斯·哈德尼",
+       "note": "专职教人骗人的白帽"
+      }
+     ]
+    },
+    {
+     "name": "六大影响力原则",
+     "items": [
+      {
+       "word": "互惠原则",
+       "note": "先给好处再提要求"
+      },
+      {
+       "word": "权威效应",
+       "note": "穿制服就能通行"
+      },
+      {
+       "word": "稀缺效应",
+       "note": "越说越少越想要"
+      },
+      {
+       "word": "社会认同",
+       "note": "别人都买我也买"
+      },
+      {
+       "word": "承诺一致",
+       "note": "先骗你答应小请求"
+      },
+      {
+       "word": "喜好原则",
+       "note": "长得好看更容易骗"
+      }
+     ]
+    },
+    {
+     "name": "经典骗术",
+     "items": [
+      {
+       "word": "尼日利亚419骗局",
+       "note": "王子遗产等你解冻"
+      },
+      {
+       "word": "钓鱼邮件",
+       "note": "点开附件你就上钩"
+      },
+      {
+       "word": "商业邮件诈骗",
+       "note": "假CEO一句话转走巨款"
+      },
+      {
+       "word": "尾随进入",
+       "note": "抱着纸箱蹭进门禁"
+      },
+      {
+       "word": "杀猪盘",
+       "note": "先谈恋爱再谈投资"
+      }
+     ]
+    },
+    {
+     "name": "真实大案",
+     "items": [
+      {
+       "word": "索尼影业被黑",
+       "note": "一封假苹果邮件引爆"
+      },
+      {
+       "word": "民主党邮件门",
+       "note": "Gmail里钓出大选内料"
+      },
+      {
+       "word": "米特尼克落网",
+       "note": "被追踪三年终被捕"
+      },
+      {
+       "word": "纽约时报被入侵",
+       "note": "记者账号被人借走"
+      }
+     ]
+    },
+    {
+     "name": "影视与书",
+     "items": [
+      {
+       "word": "《欺骗的艺术》",
+       "note": "米特尼克的骗术教科书"
+      },
+      {
+       "word": "《影响力》",
+       "note": "说服学的销量怪兽"
+      },
+      {
+       "word": "《我是谁：没有绝对安全的系统》",
+       "note": "德国黑客片脑洞天花板"
+      },
+      {
+       "word": "《猫鼠游戏》",
+       "note": "小李子骗遍全美国"
+      },
+      {
+       "word": "《黑客军团》",
+       "note": "致郁系赛博朋克神剧"
+      }
+     ]
+    },
+    {
+     "name": "AI时代新变种",
+     "items": [
+      {
+       "word": "深度伪造语音诈骗",
+       "note": "AI模仿儿子哭着要钱"
+      },
+      {
+       "word": "AI换脸诈骗",
+       "note": "视频通话对面是假的"
+      },
+      {
+       "word": "冒充公检法",
+       "note": "最老套却最能骗"
+      },
+      {
+       "word": "免费WiFi钓鱼",
+       "note": "连上就被看光"
+      }
+     ]
+    }
+   ],
+   "thinking": "The user wants social engineering keyword exploration. Type: 概念 (concept). Pick 4-6 dimensions: 定义与起源、经典手法/案例、关键人物、代表作品/影视、相邻概念、常见误解/争议.\n\nNeed real terms. Let's think:\n\n定义与起源: 凯文·米特尼克《欺骗的艺术》、罗伯特·西奥迪尼《影响力》、巴拉克·奥巴马 \"Yes We Can\"? no. 定义: 钓鱼邮件(Phishing)、 pretexting、尾随进入(_tailgating)、诱饵。\n\n关键人物: 凯文·米特尼克、斯坦利·格林斯潘(社会工程学之父?)、罗伯特·西奥迪尼、乔·纳瓦罗、克里斯·哈德尼(Chris Hadnagy, social-engineer.com)、凯文·米特尼克是代表人物。米特尼克的师傅是Kevin Mitnick... 另外 \"暗灰帽\" 等。\n\n经典案例: 阿德里安·拉莫、Kevin Mitnick 攻击 DEC、日本富士银行 ATM 骗局(1973年，岩田晃一? 实际是\"社会工程学\"经典案例：1973年瑞典银行? ) 常引用: 1973年 瑞典 起点? 常见的经典案例: \"美国银行 转账\" hmm. 有 名案: \"1970s 洛杉矶? \" Maybe safer: 王海打假? no.\n\nKnown social engineering cases on Bilibili/encyclopedia:\n- 凯文·米特尼克 攻击 太平洋贝尔\n- 弗雷德·科恩? no\n- 钓鱼攻击 \"尼日利亚王子\" 419诈骗\n- 西班牙囚徒骗局 (Spanish Prisoner)\n- 尼克·里森? no that's trading.\n- 巴黎银行? \n- \"打电话给CEO\" 商业邮件诈骗 BEC\n- 孙悟空/张良? hmm\n- \"Candy Jones\"? no\n\n影视作品: 《欺骗的艺术》(书), 《我是谁：没有绝对安全的系统》(Who Am I, 2014 德国电影), 《闪电侠》? 《Mr. Robot》黑客军团, 《诈骗风云》? 《猫鼠游戏》(Catch Me If You Can) — 身份伪装, 《十三层》? 《社会工程学》纪录片? B站有 \"社会工程学\" 相关视频。\n\n相邻概念: 钓鱼邮件、鱼叉式钓鱼、水坑攻击、凭据填充、中间人攻击、密码心理学、NLP/冷读术 (cold reading)、催眠? \"读心术\"。\n\n历史: 源于间谍活动, 心理学基础: 罗伯特·西奥迪尼六原则(互惠、承诺一致、社会认同、喜好、权威、稀缺)。\n\n常见误解/争议: 社会工程学 vs 黑客技术, 是否违法, \"骗术\"道德边界, AI 深度伪造 (Deepfake 语音诈骗)。\n\nLet's structure 5-6 dimensions:\n\n1. 定义与起源 (concept origins): \n- 凯文·米特尼克《欺骗的艺术》、罗伯特·西奥迪尼《影响力》、\"欺骗的艺术\"、凯文·米特尼克、社会工程学之父? \nActually let's do:\ndimension \"入门读物\": 《欺骗的艺术》、《影响力》、《攻心计》? hmm. \"读心术\"? \n\nDimensions:\n1. 代表人物: 凯文·米特尼克、罗伯特·西奥迪尼、克里斯·哈德尼、乔·纳瓦罗、阿德里安·拉莫\n2. 经典骗术/手法: 尼日利亚419骗局、西班牙囚徒骗局、钓鱼邮件、尾随门禁、鱼叉式钓鱼、预文本 pretexting? Use Chinese: 预设身份套取? Better to use searchable terms: \"尼日利亚419诈骗\"、\"钓鱼邮件\"、\"商业邮件诈骗(BEC)\"、\"尾随进入\"、\"电话诈骗剧本\" hmm.\n3. 心理学原理: 六大影响力原则 items: 互惠原则、权威效应、稀缺效应、社会认同、承诺一致、喜好原则. That's good and searchable.\n4. 影视作品: 《我是谁：没有绝对安全的系统》、《猫鼠游戏》、《黑客军团》、《诈骗枭雄》? (Inventor of Social Engineering?) \"骗局\" doc? \"Tinder Swindler\" 网骗人生? \"创造营\"? Let's use: 《我是谁：没有绝对安全的系统》、《猫鼠游戏》、《黑客军团 Mr. Robot》、《社交网络》? not really. 《瞒天过海》? hmm. Also 纪录片《骗局大揭秘》? Actually there's Netflix \"Web of Make Believe\"? Let's keep 3-4 safe: 《我是谁》、《猫鼠游戏》、《黑客军团》、《诈骗王》(Tinder Swindler 中文名\"网骗人生\"/\"Tinder诈骗王\").\n5. 现代变种/争议: 深度伪造语音诈骗、AI 换脸、祖母骗局、杀猪盘、钓鱼WiFi. \"杀猪盘\" is great.\n6. 相邻概念: 钓鱼攻击、水坑攻击、凭据填充、中间人攻击、撞库、密码心理学? Or \"OSINT 侦查\"? \"侦察\" hmm.\n\nAlso could add \"历史事件\": 斯坦利·密西根? Real historic: \"1973年 阿布? \" Known classic: In 1973, a man called a bank... Actually famous case: \"约翰·雷德蒙\"? Let's avoid fabricated. Safe historic: \"米特尼克被捕 1995年\" (FBI/Kevin Mitnick arrest by Shimomura) — 东野圭吾? The pursuit by Tsutomu Shimomura (下村努) — \"追捕米特尼克\" famous, and movie \"Track Down\" / 《欺诈猎人》. Also \"凯文·米特尼克\" already in人物.\n\nAdd dimension \"真实大案\": \"米特尼克落网\" (下村努追捕)、\"美国银行1975\"? hmm. Others: \"2016年孟加拉央行被盗 SWIFT\"? that's not social engineering exactly (insider). \"索尼影业 hack 2014\" (钓鱼邮件) — yes! Sony Pictures hack began with phishing emails. \"希拉里邮件门\"? no. \"DNC 黑客 (Cozy Bear)\" phishing — yes, 2016美国大选民主党全国委员会被钓鱼. \"凯文·米特尼克攻击DEC\". \"拉莫入侵《纽约时报》\" (Adrian Lamo hacked NYT 2002) — yes.\n\nGood. Let's produce JSON with 6 dimensions, 3-6 items each.\n\nCheck visited words: 黑客 is visited — avoid standalone \"黑客\". Avoid 红队测试, 网络安全 visited.\n\nDimensions:\n1. 代表人物 (5): 凯文·米特尼克、罗伯特·西奥迪尼、阿德里安·拉莫、下村努、克里斯·哈德尼\n2. 心理学原理 (6): 互惠原则、权威效应、稀缺效应、社会认同、承诺一致、喜好原则 — maybe rename \"六大影响力原则\" as dimension name and items are the principles. Good.\n3. 经典骗术 (5): 尼日利亚419骗局、钓鱼邮件、商业邮件诈骗、尾随进入、杀猪盘\n4. 真实大案 (4): 索尼影业被黑、民主党全国委员会邮件门、米特尼克落网、纽约时报被入侵\n5. 影视与书 (5): 《欺骗的艺术》、《影响力》、《我是谁：没有绝对安全的系统》、《猫鼠游戏》、《黑客军团》\n6. 新变种 (4): 深度伪造语音、AI换脸、钓鱼WiFi、祖母骗局? \"假孙子骗局\"? Use \"冒充公检法\" — real, searchable. \"杀猪盘\" used already. Use: 深度伪造语音诈骗、AI换脸诈骗、冒充公检法、蹭网钓鱼WiFi? Better \"免费WiFi钓鱼\".\n\nSummary within 20 chars: \"用骗术绕过技术防线的人心攻击术\" ~15.\n\nNotes ≤15 chars each.\n\nCheck item facts:\n- 下村努 (Tsutomu Shimomura) — 追捕米特尼克的物理学家, real.\n- 克里斯·哈德尼 Chris Hadnagy, social-engineer.com, \"人类黑客\" author. B站? Probably some. OK.\n- 阿德里安·拉莫 — \"无家可归的黑客\", hacked NYT. Real.\n- 尾随进入 tailgating — real term.\n- 索尼影业 2014 hack by phishing — real.\n- DNC hack 2016 phishing — real.\n- \"冒充公检法\" — Chinese telecom fraud term, real.\n\nNotes short and 勾人.",
+   "word": "社会工程学"
+  }
+ },
+ "巴别塔": {
+  "word": "巴别塔",
+  "time": 1790765469,
+  "detail": "圣经创世记里的故事：人类想合力修一座通天塔，上帝怕他们真成了，就打乱他们的语言，让彼此听不懂，工程就此散伙。名字来自希伯来语「混乱」。现在常用来比喻语言不通的困境——也有人拿它调侃机器翻译和大模型：要是AI真能让全人类无障碍沟通，算是把这座塔修成了。"
+ },
+ "网景": {
+  "word": "网景",
+  "time": 1790765538,
+  "detail": "1994年由马克·安德森和吉姆·克拉克创办，靠 Netscape Navigator 浏览器一度占九成市场，1995 年 IPO 首日暴涨，被视为互联网商业化的开端。随后与微软 IE 打起浏览器大战，被 Windows 免费捆绑 IE 挤垮，2003 年卖给 AOL。其开源后代 Mozilla 最终长出了 Firefox。"
+ },
+ "元宇宙": {
+  "word": "元宇宙",
+  "time": 1790768534,
+  "detail": "指一个持久在线、人人以虚拟化身生活的3D互联网。2021年10月扎克伯格把Facebook母公司改名Meta全力押注，随后几年烧掉数百亿美元却用户寥寥，成了科技圈“风口吹过头”的经典案例；如今借AI和苹果Vision Pro又有了新谈资。"
+ },
+ "ChatGPT": {
+  "word": "ChatGPT",
+  "time": 1790768738,
+  "detail": "OpenAI 2022年12月上线的聊天机器人，基于GPT-3.5/GPT-4大模型，靠海量文本训练学会接话。两个月冲到1亿用户，史上最快，直接引爆全球AI竞赛，也让微软的百亿美元投资成了最划算的一笔。它能写代码、改文案、编段子，也会一本正经地胡说八道，人称「幻觉」。"
+ },
+ "DeepMind": {
+  "word": "DeepMind",
+  "time": 1790768786,
+  "detail": "2010年在伦敦创立的AI实验室，2014年被谷歌收购，与谷歌大脑合并成Google DeepMind。它靠深度强化学习让AI自学下棋，2016年AlphaGo击败围棋冠军李世石，是AI史上的标志性事件；2020年AlphaFold解决了困扰生物学50年的蛋白质折叠难题。风格偏学术、慢工出细活，被称为谷歌的AI大脑。"
+ },
+ "埃隆·马斯克": {
+  "word": "埃隆·马斯克",
+  "time": 1790768858,
+  "deep": {
+   "type": "人物",
+   "summary": "硅谷狂人,造车造火箭还想上火星",
+   "dimensions": [
+    {
+     "name": "公司与创业",
+     "items": [
+      {
+       "word": "Zip2",
+       "note": "马斯克首个公司,卖了3亿"
+      },
+      {
+       "word": "PayPal黑帮",
+       "note": "易趣收购后的创业军团"
+      },
+      {
+       "word": "SpaceX",
+       "note": "火箭回收改写航天史"
+      },
+      {
+       "word": "特斯拉CEO之争",
+       "note": "创始人被踢出局的宫斗"
+      },
+      {
+       "word": "Neuralink",
+       "note": "脑机接口,猪脑演示引热议"
+      }
+     ]
+    },
+    {
+     "name": "争议与梗",
+     "items": [
+      {
+       "word": "推特收购案",
+       "note": "440亿美元买下又想反悔"
+      },
+      {
+       "word": "马斯克跳舞",
+       "note": "发布会魔性舞步全网疯传"
+      },
+      {
+       "word": "狗狗币与柴犬",
+       "note": "一条推文带崩带涨币价"
+      },
+      {
+       "word": "特斯拉天幕玻璃",
+       "note": "夏天烤头顶的名场面"
+      },
+      {
+       "word": "马保国式营销",
+       "note": "投资人被忽悠的名言"
+      }
+     ]
+    },
+    {
+     "name": "火星梦与野心",
+     "items": [
+      {
+       "word": "星舰试射",
+       "note": "爆炸了也算成功的疯狂测试"
+      },
+      {
+       "word": "火星殖民计划",
+       "note": "百万人移民的疯狂蓝图"
+      },
+      {
+       "word": "第一性原理",
+       "note": "马斯克式思维方法论"
+      },
+      {
+       "word": "超回路隧道",
+       "note": "地下时速千里的构想"
+      }
+     ]
+    },
+    {
+     "name": "对立与宿敌",
+     "items": [
+      {
+       "word": "贝索斯太空大战",
+       "note": "蓝色起源互告上法庭"
+      },
+      {
+       "word": "扎克伯格笼斗",
+       "note": "约架约到八角笼的闹剧"
+      },
+      {
+       "word": "OpenAI出走记",
+       "note": "从联合创始人到死对头"
+      },
+      {
+       "word": "比尔·盖茨做空特斯拉",
+       "note": "首富间的多空对决"
+      }
+     ]
+    },
+    {
+     "name": "文化符号",
+     "items": [
+      {
+       "word": "钢铁侠原型",
+       "note": "托尼·斯塔克的现实蓝本"
+      },
+      {
+       "word": "马斯克中国行",
+       "note": "凌晨逛工厂吃煎饼果子"
+      },
+      {
+       "word": "马斯克玩梗王",
+       "note": "发帖如发癫的顶流老板"
+      }
+     ]
+    }
+   ],
+   "thinking": "Generate JSON for Elon Musk, dimensions avoiding visited words.",
+   "word": "埃隆·马斯克"
+  }
+ },
+ "钢铁侠原型": {
+  "word": "钢铁侠原型",
+  "time": 1790768891,
+  "detail": "常被视为钢铁侠托尼·斯塔克的现实蓝本之一（另一位是马斯克）。他是美国传奇富商：拍过《地狱天使》等大片，造飞机破飞行纪录，创办休斯工具公司，晚年孤僻怪异、隐居数十年。天才、花花公子加疯癫发明家的组合，正是斯塔克的底色。"
+ },
+ "为什么叫DeepSeek": {
+  "word": "为什么叫DeepSeek",
+  "time": 1790769199,
+  "detail": "官方中文名「深度求索」，典出《离骚》「路漫漫其修远兮，吾将上下而求索」，理工宅的浪漫。但网友更爱谐音梗：英文读着像 Deep Sink（深陷），调侃母公司幻方量化是家炒股私募，烧钱做AI等于「深度亏钱」。创始人梁文锋从量化交易转行做通用AI，2024年底V3、R1发布后这名字一夜全球皆知。"
+ },
+ "强化学习训练": {
+  "word": "强化学习训练",
+  "time": 1790769300,
+  "detail": "让AI像训狗一样学东西:自己反复试错,做对给奖励、做错扣分,慢慢摸索出最优套路,不靠人手把手喂标准答案。标志性案例是DeepMind的AlphaGo,靠自我对弈下出了人类没想到的棋路;ChatGPT的RLHF也是用人类打分来强化它说人话。特点是练起来烧算力,还可能学出投机取巧的歪招。"
+ },
+ "月之暗面Kimi": {
+  "word": "月之暗面Kimi",
+  "time": 1790769312,
+  "detail": "月之暗面(Moonshot AI)2023年成立,创始人杨植麟是清华出身、师从图灵奖得主杨立昆的85后。旗舰产品Kimi靠能一口气读几十万字长文本出圈——丢一整本书、一堆合同进去让它总结都行,2024年靠这一招在大模型混战中杀出重名。名字据说取自黑泽明电影《月光假面》的意象,主打一个'看得比别人长'。"
+ },
+ "智谱AI": {
+  "word": "智谱AI",
+  "time": 1790769344,
+  "deep": {
+   "type": "组织",
+   "summary": "清华系大模型独角兽，GLM开源阵营旗手",
+   "dimensions": [
+    {
+     "name": "身份与出身",
+     "items": [
+      {
+       "word": "清华大学计算机系",
+       "note": "智谱诞生的学术摇篮"
+      },
+      {
+       "word": "KEG知识引擎实验室",
+       "note": "唐杰带队的原始团队"
+      },
+      {
+       "word": "智谱华章",
+       "note": "公司注册全名,藏在门牌里"
+      },
+      {
+       "word": "北京AI第一股",
+       "note": "2025冲刺港股IPO"
+      }
+     ]
+    },
+    {
+     "name": "关键人物",
+     "items": [
+      {
+       "word": "张鹏",
+       "note": "CEO,清华计算机系出身"
+      },
+      {
+       "word": "唐杰",
+       "note": "创始科学家,悟道之父"
+      },
+      {
+       "word": "李涓子",
+       "note": "联合创始人,NLP女学者"
+      }
+     ]
+    },
+    {
+     "name": "代表产品",
+     "items": [
+      {
+       "word": "GLM-4",
+       "note": "对标GPT-4的旗舰模型"
+      },
+      {
+       "word": "ChatGLM-6B",
+       "note": "6B模型,消费级显卡能跑"
+      },
+      {
+       "word": "清言App",
+       "note": "智谱自家聊天机器人"
+      },
+      {
+       "word": "AutoGLM",
+       "note": "会自己点手机的智能体"
+      },
+      {
+       "word": "CogView",
+       "note": "清华系AI绘画开山作"
+      }
+     ]
+    },
+    {
+     "name": "技术与打法",
+     "items": [
+      {
+       "word": "GLM架构",
+       "note": "自回归+填空的混血设计"
+      },
+      {
+       "word": "开源策略",
+       "note": "权重上GitHub吸开发者"
+      },
+      {
+       "word": "MaaS开放平台",
+       "note": "模型即服务,按token收钱"
+      },
+      {
+       "word": "CogVLM",
+       "note": "看图说话的多模态模型"
+      }
+     ]
+    },
+    {
+     "name": "同场对手与盟友",
+     "items": [
+      {
+       "word": "面壁智能",
+       "note": "清华同门的师兄弟创业"
+      },
+      {
+       "word": "百川智能",
+       "note": "王小川的通用+医疗路线"
+      },
+      {
+       "word": "百模大战",
+       "note": "2023中国大模型井喷"
+      },
+      {
+       "word": "大模型价格战",
+       "note": "百万token降到一块钱"
+      }
+     ]
+    },
+    {
+     "name": "争议与里程碑",
+     "items": [
+      {
+       "word": "美国实体清单",
+       "note": "2025被列五角大楼名单"
+      },
+      {
+       "word": "开源与闭源之争",
+       "note": "路线摇摆引发的口水战"
+      },
+      {
+       "word": "悟道",
+       "note": "国产首个万亿参数模型"
+      }
+     ]
+    }
+   ],
+   "thinking": "The user wants keywords related to 智谱AI (Zhipu AI). Type: 组织 (organization). Choose 4-6 dimensions with 3-6 items each.\n\nDimensions: 历史沿革、关键人物、代表产品、相关组织/股东、技术路线、争议点\n\nItems (real, searchable):\n- GLM-4 (代表模型)\n- ChatGLM-6B (开源模型)\n- 清华大学计算机系 / KEG实验室 (出身)\n- 唐杰 (关键人物)\n- 张鹏 (CEO)\n- 王小川/百川智能? 相关组织\n- 智谱华章 (公司全称)\n- AutoGLM\n- 沉思 / 清言App\n- 2024年世界人工智能大会?\n- 上市/北京AI第一股 (2025年港股IPO)\n- MaaS开放平台\n- 悟道 (TuringDEVS? 悟道是中国首个万亿模型, 清华发布)\n- 相关组织: 阿里? 智谱投资方有社保基金、中关村科学城...\n- 争议点: 开源闭源之争? 智谱被列入实体清单 (2025年1月美国国防部清单) — that's real.\n- 词表avoid: 已访问的.\n\nLet's craft:\n\n1. 出身与沿革: 清华大学计算机系 KEG实验室、智谱华章、唐杰与悟道、北京AI第一股（港股IPO 2025）、从实验室到独角兽\n2. 关键人物: 张鹏、唐杰、李涓子? (李涓子是清华副教授, 智谱? 她是清华大学计算机系副教授, 参与智谱早期), 王诗韵? 不确定。 常见人物: 张鹏(CEO)、唐杰(创始科学家)、清华大学NLP实验室。 还有 \"刘德建\"? no. 用 李涓子 需要确认 — 她确实是智谱联合创始人? 李涓子是智谱AI联合创始人之一? 我记得智谱创始团队: 王鹏? 唐杰团队。谨慎: 只放张鹏、唐杰, 再加 \"清华系创业者\" 泛化不行, 需要具体词。可以放 \"李涓子\"? 网上有报道智谱联合创始人李涓子。我比较有信心她是智谱首席科学家? 实际上智谱首席科学家是 唐杰。李涓子是清华副教授, 参与智谱。风险中等, 我可以放但低优先。改放 \"倪凯\"? no.\n\nBetter items for 关键人物 dimension: 张鹏（CEO）、唐杰（创始科学家）、李涓子（联合创始人）— 我记得 2023 报道智谱三位联合创始人: 张鹏、唐杰、李涓子。 这是可信的。\n\n3. 代表产品: GLM-4、ChatGLM-6B、清言App、AutoGLM、智谱开放平台MaaS、CogView（画图）\n4. 技术路线: GLM架构（General Language Model）、千亿参数训练、开源策略（vLLM? no）、RAG? 避免泛。用: GLM自回归填空、模型即服务MaaS、多模态CogVLM\n5. 相关组织与对手: 百川智能、月之暗面（已访问Kimi但月之暗面Kimi作为一词已访问——避免重复词\"月之暗面Kimi\"，但可以提DeepSeek? DeepSeek相关词可能已访问\"为什么叫DeepSeek\"但DeepSeek本身没访问过? 系统有提示 DeepSeek 是系统词汇，不算访问。谨慎，可放DeepSeek? 避免。放: 阿里通义千问、百度文心一言、MiniMax、面壁智能（清华系师兄弟）\n6. 争议与里程碑: 美国国防部实体清单（2025.1）、开源闭源之争、价格战\"大模型打价饭\"? \"百模大战\"、智谱上市传闻/北京第一股\n\nSummary ≤20字: \"清华系大模型独角兽,GLM开源阵营旗手\"\n\nLet's write items with notes ≤15 chars.\n\n维度: 身份与出身\n- 清华大学计算机系：智谱诞生的摇篮\n- KEG知识引擎实验室：唐杰带的团队\n- 智谱华章：公司注册全名\n- 北京AI第一股：2025港股IPO\n\n关键人物:\n- 张鹏：智谱CEO,清华校友\n- 唐杰：创始科学家,悟道之父\n- 李涓子：联合创始人,NLP学者\n\n代表产品:\n- GLM-4：对标GPT-4的旗舰\n- ChatGLM-6B：6B显存可跑的开源爆款\n- 清言App：智谱自家聊天机器人\n- AutoGLM：能自己操作手机的智能体\n- CogView：清华系AI绘画\n\n技术路线:\n- GLM架构：填空式自回归混合\n- 开源策略：权重放GitHub吸开发者\n- MaaS开放平台：模型即服务卖token\n- CogVLM：视觉语言多模态\n\n商业与资本:\n- 面壁智能：清华系师兄弟创业\n- 大模型价格战：2024百万token卷价\n- 中关村科学城：国资股东\n- 王小川百川智能：同场清华同门竞品? 百川王小川不是清华, 是北邮。改: \"百川智能\" note: 王小川的医疗+通用路线\n\n争议与里程碑:\n- 美国实体清单：2025被列国防部名单\n- 百模大战：2023中国大模型井喷\n- 开源vs闭源：智谱摇摆的路线之争\n\nI should check: \"AutoGLM\" exists - yes, Zhipu released AutoGLM in 2024. 清言 (ChatGLM app called 清言). Yes.\n\nCogView - Tsinghua/Zhipu text-to-image. Yes.\n\n实体清单: In Jan 2025, US DoD listed Zhipu AI (智谱) in 1260H list. Yes real.\n\nNote constraints: word ≤? note ≤15字.\n\nOutput JSON only.",
+   "word": "智谱AI"
+  }
+ },
+ "开源与闭源之争": {
+  "word": "开源与闭源之争",
+  "time": 1790769434,
+  "detail": "软件的两条路线打架：开源把代码公开，人人可看可改（代表 Linux、GNU，1998 年成立开放源码促进会）；闭源只给成品（代表微软 Office、早期 OpenAI）。理由是自由共享 vs 商业护城河。到 AI 时代换了个讲法——模型权重放不放出来，DeepSeek 开源、GPT 闭源，路线来回摇摆，于是口水战不断。"
+ },
+ "张鹏": {
+  "word": "张鹏",
+  "time": 1790769453,
+  "detail": "智谱AI的CEO，清华计算机系本科出身，早期在百度做过搜索与产品。2019年参与创立智谱（源自清华KEG实验室），带出ChatGLM系列模型，是中国大模型「六小虎」之一的操盘手。业内常称他从技术转管理的典型。"
+ },
+ "唐杰": {
+  "word": "唐杰",
+  "time": 1790769682,
+  "detail": "清华大学计算机系教授，知识工程实验室（KEG）负责人，也是智谱AI的首席科学家。他和学生张鹏把实验室研究成果变成了创业公司，参与孵化 ChatGLM 系列模型，是国内学术圈下场做 AI 创业的典型代表。研究方向包括社交网络挖掘、知识图谱和机器学习。"
  }
 }

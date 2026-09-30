@@ -203,11 +203,13 @@ def expand():
     if mode not in ("basic", "deep", "detail"):
         return jsonify({"error": "mode 只能是 basic / deep / detail"}), 400
 
+    force = request.args.get("force") == "1"  # 🔄重写:无视缓存强制重新生成
+
     cache = load_cache()
     entry = cache.get(word)
 
-    # 缓存命中:漫游看词条本身,深挖和详情看词条里嵌的对应字段
-    if entry is not None:
+    # 缓存命中:漫游看词条本身,深挖和详情看词条里嵌的对应字段(force=重写时跳过)
+    if entry is not None and not force:
         if mode == "basic" and entry.get("parents"):
             return jsonify({"cached": True, "data": entry})
         if mode == "deep" and entry.get("deep"):

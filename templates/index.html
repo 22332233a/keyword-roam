@@ -57,6 +57,8 @@
   .item .links { font-size: 12px; }
   .item .links a { color: #5b83d6; text-decoration: none; margin-right: 10px; }
   .item .links a:hover { text-decoration: underline; }
+  .regen-link { color: #5b83d6; cursor: pointer; font-size: 12px; margin-left: 6px; }
+  .regen-link:hover { text-decoration: underline; }
   .item .deep-btn {
     margin-left: auto; background: none; border: 1px solid #3a3f4e; color: #b48aff;
     border-radius: 6px; padding: 1px 8px; font-size: 12px; cursor: pointer;
@@ -138,7 +140,7 @@ function links(w) {
     <a href="https://weixin.sogou.com/weixin?type=2&query=${e}" target="_blank">公众号</a>
   </span>`;
 }
-/* 一个词条:点词=普通漫游,🔍=深挖,📖=150字详情,末尾是三颗搜索链接 */
+/* 一个词条:点词=普通漫游,🔍=深挖,📖=150字详情,🔄=重写,末尾是三颗搜索链接 */
 function itemRow(it) {
   const seen = visited.has(it.word) ? " seen" : "";
   const w = esc(it.word).replace(/'/g, "\\'");
@@ -147,11 +149,33 @@ function itemRow(it) {
       <span class="w" onclick="roam('${w}')">${esc(it.word)}</span>
       <button class="deep-btn" onclick="roamDeep('${w}')">🔍深挖</button>
       <button class="deep-btn" onclick="toggleDetail(this, '${w}')">📖详情</button>
+      <button class="deep-btn" onclick="regenDetail(this, '${w}')">🔄重写</button>
     </div>
     <div class="note">${esc(it.note)}</div>
     <div class="detail-box" hidden></div>
     ${links(it.word)}
   </div>`;
+}
+
+function renderDetailInto(box, word, data) {
+  // 模型可能推断出输入实际指向的名称(如句子→领英中国),顺带展示;末尾挂🔄重写入口
+  const named = data.word && data.word !== word ? `【${esc(data.word)}】` : "";
+  const w = esc(word).replace(/'/g, "\\'");
+  box.innerHTML = named + esc(data.detail) +
+    ` <a class="regen-link" onclick="regenDetail(this, '${w}')">🔄重写</a>`;
+  box.dataset.loaded = "1";
+}
+
+async function fetchDetail(word, force) {
+  const flavor = document.getElementById("flavor-input").value;
+  const itemEl = document.querySelector(`.item .w[onclick*="roam('${word.replace(/'/g, "\\'")}')"]`)?.closest(".item");
+  const ctx = itemEl
+    ? `${itemEl.querySelector(".w")?.textContent ?? ""}(${itemEl.querySelector(".note")?.textContent ?? ""})`
+    : (currentWord ? `关于「${currentWord}」的介绍` : "");
+  const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&mode=detail&flavor=${encodeURIComponent(flavor)}${force ? "&force=1" : ""}&ctx=${encodeURIComponent(ctx)}`);
+  const body = await resp.json();
+  if (!resp.ok) throw new Error(body.error || resp.statusText);
+  return body.data;
 }
 
 /* 详情:首次点击调 API 生成 150 字解释,之后开合切换(结果已进缓存,不重复花钱)
@@ -166,19 +190,7 @@ async function toggleDetail(btn, word) {
   if (box.dataset.loaded) return;                    // 已有内容 → 直接展开
   box.textContent = "生成详情中…";
   try {
-    const flavor = document.getElementById("flavor-input").value;
-    // 把选区所在词条的信息带上,句式输入推断指向时需要上下文
-    const itemEl = btn.closest(".item");
-    const ctx = itemEl
-      ? `${itemEl.querySelector(".w")?.textContent ?? ""}(${itemEl.querySelector(".note")?.textContent ?? ""})`
-      : (currentWord ? `关于「${currentWord}」的介绍` : "");
-    const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&mode=detail&flavor=${encodeURIComponent(flavor)}&ctx=${encodeURIComponent(ctx)}`);
-    const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || resp.statusText);
-    // 模型可能推断出输入实际指向的名称(如句子→领英中国),顺带展示
-    const named = body.data.word && body.data.word !== word ? `【${body.data.word}】` : "";
-    box.textContent = named + body.data.detail;
-    box.dataset.loaded = "1";
+    renderDetailInto(box, word, await fetchDetail(word, false));
   } catch (err) {
     // 详情偶发解析失败(句式输入尤其),自动降级为追问式解释,保证有答案
     try {
@@ -191,6 +203,21 @@ async function toggleDetail(btn, word) {
     } catch (err2) {
       box.textContent = "出错:" + (err2.message || err.message);
     }
+  }
+}
+
+/* 🔄重写:无视缓存强制重新生成(详情写得烂时的逃生门),替换旧解释 */
+async function regenDetail(btn, word) {
+  const box =
+    btn.closest(".item")?.querySelector(".detail-box") ||
+    document.getElementById("center-detail");
+  if (!box) return;
+  box.hidden = false;
+  box.textContent = "重写中…(换一次骰子)";
+  try {
+    renderDetailInto(box, word, await fetchDetail(word, true));
+  } catch (err) {
+    box.textContent = "重写失败:" + err.message;
   }
 }
 function col(title, items) {

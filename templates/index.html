@@ -330,15 +330,18 @@ function renderCenter(word, tag) {
      <div class="center-actions">
        <button class="deep-btn lg" onclick="roamDeep('${w}')">🔍深挖</button>
        <button class="deep-btn lg" onclick="toggleDetail('${w}')">📖详情</button>
+       <button class="deep-btn lg" onclick="roamThinking()">🧭漫游思考</button>
      </div>
      <div class="detail-box" id="center-detail" hidden></div>
-     <div class="detail-box think-box" id="center-think" hidden></div>`;
+     <div class="detail-box think-box" id="center-think" hidden></div>
+     <div class="detail-box think-box" id="center-roamthink" hidden></div>`;
 }
 
 /* 普通漫游:左栏固定三组 */
 function renderBasic(d, cached) {
   currentViewMode = "basic";
   currentThinking = "";
+  if (d.thinking) roamThinkMem.set(d.word, d.thinking);   // 本次的漫游思维链进内存,🧭按钮直接用
   renderCenter(d.word, (cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆"));
   renderGroups([
     { title: "⬆ 上级分类", items: d.parents },
@@ -370,6 +373,40 @@ function toggleThinking() {
   if (!box.hidden) { box.hidden = true; return; }
   box.textContent = currentThinking || "(本次没有记录到思考过程)";
   box.hidden = false;
+}
+
+/* 🧭漫游思考:请求漫游接口(mode=basic),把漫游这趟的思维链折叠展示。
+   本次会话里见过的思维链存在内存里,再点不花钱;旧缓存没存思维链时给强制重漫游的入口 */
+const roamThinkMem = new Map();   // word -> 漫游思维链
+
+async function roamThinking(force) {
+  const box = document.getElementById("center-roamthink");
+  if (!box) return;
+  if (!box.hidden && !force) { box.hidden = true; return; }   // 开着 → 收起
+  const mem = !force && roamThinkMem.get(currentWord);
+  if (mem) { box.textContent = mem; box.hidden = false; return; }
+  box.hidden = false;
+  box.textContent = "请求漫游接口中…(没有缓存的话会真花一次请求)";
+  try {
+    const flavor = document.getElementById("flavor-input").value;
+    const resp = await fetch(`/api/expand?word=${encodeURIComponent(currentWord)}&flavor=${encodeURIComponent(flavor)}&mode=basic${force ? "&force=1" : ""}`);
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(body.error || body.statusText);
+    if (body.data.thinking) {
+      roamThinkMem.set(currentWord, body.data.thinking);
+      box.textContent = body.data.thinking;
+    } else {
+      // 旧格式的缓存没有 thinking 字段,只能强制重新漫游才能生成
+      box.textContent = "(这条缓存是旧格式,没存漫游思考过程)";
+      const a = document.createElement("a");
+      a.className = "regen-link";
+      a.textContent = "🔄强制重新漫游生成";
+      a.onclick = () => roamThinking(true);
+      box.appendChild(a);
+    }
+  } catch (err) {
+    box.textContent = "出错:" + err.message;
+  }
 }
 
 let chipsExpanded = false;   // 足迹默认折叠到两行

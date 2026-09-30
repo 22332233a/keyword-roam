@@ -172,6 +172,7 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ct
     if mode == "basic":
         for key in ("parents", "children", "similar"):
             assert isinstance(data.get(key), list), f"模型返回缺少 {key}"
+        data["thinking"] = reasoning  # 漫游也把思维链存下来,前端可单独查看
     elif mode == "deep":
         assert isinstance(data.get("dimensions"), list) and data["dimensions"], "模型返回缺少 dimensions"
         data["thinking"] = reasoning  # 深挖把思维链一起存下来,前端可单独查看

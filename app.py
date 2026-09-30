@@ -205,6 +205,7 @@ def expand():
         return jsonify({"error": "mode 只能是 basic / deep / detail"}), 400
 
     force = request.args.get("force") == "1"  # 🔄重写:无视缓存强制重新生成
+    cache_only = request.args.get("cache_only") == "1"  # 🧭漫游思考:只要缓存,缓存没有就不生成(零花费)
 
     cache = load_cache()
     entry = cache.get(word)
@@ -219,6 +220,8 @@ def expand():
             return jsonify({"cached": True, "data": {"word": word, "detail": entry["detail"]}})
 
     try:
+        if cache_only:
+            return jsonify({"error": "没有可复用的漫游缓存(这个词还没漫游过,或旧缓存没存思维链)"}), 404
         ctx = request.args.get("ctx", "").strip()[:600]
         data = call_llm(word, flavor, list(cache.keys()), mode=mode, ctx=ctx)
     except requests.RequestException as e:

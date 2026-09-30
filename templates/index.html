@@ -375,37 +375,31 @@ function toggleThinking() {
   box.hidden = false;
 }
 
-/* 🧭漫游思考:请求漫游接口(mode=basic),把漫游这趟的思维链折叠展示。
-   本次会话里见过的思维链存在内存里,再点不花钱;旧缓存没存思维链时给强制重漫游的入口 */
+/* 🧭漫游思考:纯复用——只显示已有的漫游思维链,绝不生成新东西(零花费)。
+   顺序:本次会话内存 → 后端缓存(cache_only=1,后端保证只查不生成)。都没有就明说 */
 const roamThinkMem = new Map();   // word -> 漫游思维链
 
-async function roamThinking(force) {
+async function roamThinking() {
   const box = document.getElementById("center-roamthink");
   if (!box) return;
-  if (!box.hidden && !force) { box.hidden = true; return; }   // 开着 → 收起
-  const mem = !force && roamThinkMem.get(currentWord);
+  if (!box.hidden) { box.hidden = true; return; }   // 开着 → 收起
+  const mem = roamThinkMem.get(currentWord);
   if (mem) { box.textContent = mem; box.hidden = false; return; }
   box.hidden = false;
-  box.textContent = "请求漫游接口中…(没有缓存的话会真花一次请求)";
+  box.textContent = "找缓存里的漫游思维链…";
   try {
     const flavor = document.getElementById("flavor-input").value;
-    const resp = await fetch(`/api/expand?word=${encodeURIComponent(currentWord)}&flavor=${encodeURIComponent(flavor)}&mode=basic${force ? "&force=1" : ""}`);
+    const resp = await fetch(`/api/expand?word=${encodeURIComponent(currentWord)}&flavor=${encodeURIComponent(flavor)}&mode=basic&cache_only=1`);
     const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || body.statusText);
+    if (!resp.ok) throw new Error(body.error || "没有缓存");
     if (body.data.thinking) {
       roamThinkMem.set(currentWord, body.data.thinking);
       box.textContent = body.data.thinking;
     } else {
-      // 旧格式的缓存没有 thinking 字段,只能强制重新漫游才能生成
-      box.textContent = "(这条缓存是旧格式,没存漫游思考过程)";
-      const a = document.createElement("a");
-      a.className = "regen-link";
-      a.textContent = "🔄强制重新漫游生成";
-      a.onclick = () => roamThinking(true);
-      box.appendChild(a);
+      box.textContent = "(这个词条的漫游缓存是旧格式,当时还没存思维链;下次漫游它会带上)";
     }
   } catch (err) {
-    box.textContent = "出错:" + err.message;
+    box.textContent = "(没有可复用的漫游思维链:" + (err.message || "还没漫游过这个词") + ")";
   }
 }
 

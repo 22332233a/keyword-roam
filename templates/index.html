@@ -70,6 +70,10 @@
   }
   #history { max-width: 1400px; margin: 30px auto 0; }
   #history h3 { font-size: 13px; color: #6a6f7c; margin-bottom: 8px; }
+  #chips-wrap { overflow: hidden; }
+  #chips-wrap.collapsed { max-height: 78px; }   /* 默认只露出两行 */
+  #chips-toggle { color: #5b83d6; cursor: pointer; font-size: 13px; user-select: none; display: inline-block; margin-top: 4px; }
+  #chips-toggle:hover { text-decoration: underline; }
   .chip {
     display: inline-block; background: #1c1f28; border: 1px solid #2a2e3a;
     border-radius: 999px; padding: 4px 12px; margin: 0 6px 6px 0;
@@ -110,7 +114,8 @@
       <span class="chip ftab" data-f="deep" onclick="setFilter('deep')">🔍 深挖过</span>
       <span class="chip ftab" data-f="detail" onclick="setFilter('detail')">📖 读过详情</span>
     </div>
-    <div id="chips"></div>
+    <div id="chips-wrap" class="collapsed"><div id="chips"></div></div>
+    <span id="chips-toggle" onclick="toggleChips()" hidden>展开全部 ▾</span>
   </div>
 
   <div id="sel-menu" hidden>
@@ -302,6 +307,8 @@ function toggleThinking() {
   box.hidden = false;
 }
 
+let chipsExpanded = false;   // 足迹默认折叠到两行
+
 function renderChips() {
   const icons = { roam: "🧭", deep: "🔍", detail: "📖" };
   let words = [...visited.entries()].sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
@@ -311,6 +318,20 @@ function renderChips() {
   document.getElementById("chips").innerHTML = words.map(([w, v]) =>
     `<span class="chip" onclick="roam('${esc(w).replace(/'/g, "\\'")}')">${(v.feats ?? []).map(f => icons[f] ?? "").join("")} ${esc(w)}</span>`
   ).join("") || `<span style="color:#6a6f7c;font-size:13px">(这一类还没有足迹)</span>`;
+
+  const wrap = document.getElementById("chips-wrap");
+  const tg = document.getElementById("chips-toggle");
+  wrap.classList.toggle("collapsed", !chipsExpanded);
+  tg.textContent = chipsExpanded ? "收起 ▴" : "展开全部 ▾";
+  // 折叠状态下若内容不足两行,隐藏切换按钮
+  requestAnimationFrame(() => {
+    tg.hidden = !chipsExpanded && wrap.scrollHeight <= wrap.clientHeight + 4;
+  });
+}
+
+function toggleChips() {
+  chipsExpanded = !chipsExpanded;
+  renderChips();
 }
 
 let historyFilter = "all";

@@ -112,34 +112,43 @@ def parse_llm_json(text: str) -> dict:
     raise json.JSONDecodeError("没找到 JSON", text, 0)
 
 
-def chat(system: str, user_msg: str, temperature: float = 1.1) -> dict:
-    """发一次对话请求,返回解析后的 JSON(自动处理思维链模型的空正文)。"""
-    resp = requests.post(
-        API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={
-            "model": MODEL,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user_msg},
-            ],
-            "response_format": {"type": "json_object"},
-            "temperature": temperature,  # 漫游要的是惊喜,调高一点
-            "max_tokens": 4000,  # flash 是思维链模型,思考也吃 token 额度,给足
-        },
-        timeout=90,
-    )
-    resp.raise_for_status()
-    choice = resp.json()["choices"][0]
-    msg = choice["message"]
+def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2) -> dict:
+    """发一次对话请求,返回解析后的 JSON(自动处理思维链模型的空正文)。
+    网络抖动或模型偶发写崩 JSON 时自动重试一次——温度高就是掷骰子,重掷一次通常就好。"""
+    last_err: Exception = ValueError("未执行")
+    for attempt in range(retries):
+        try:
+            resp = requests.post(
+                API_URL,
+                headers={"Authorization": f"Bearer {API_KEY}"},
+                json={
+                    "model": MODEL,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    "response_format": {"type": "json_object"},
+                    "temperature": temperature,
+                    "max_tokens": 4000,  # flash 是思维链模型,思考也吃 token 额度,给足
+                },
+                timeout=90,
+            )
+            resp.raise_for_status()
+            choice = resp.json()["choices"][0]
+            msg = choice["message"]
 
-    content = (msg.get("content") or "").strip()
-    if not content:
-        # flash 是思维链模型:思考在 reasoning_content 里,正文可能为空,兜底去思考内容里捞
-        content = (msg.get("reasoning_content") or "").strip()
-    if not content:
-        raise ValueError(f"模型返回为空(finish_reason={choice.get('finish_reason')})")
-    return parse_llm_json(content)
+            content = (msg.get("content") or "").strip()
+            if not content:
+                # flash 是思维链模型:思考在 reasoning_content 里,正文可能为空,兜底去思考内容里捞
+                content = (msg.get("reasoning_content") or "").strip()
+            if not content:
+                raise ValueError(f"模型返回为空(finish_reason={choice.get('finish_reason')})")
+            return parse_llm_json(content)
+        except (requests.RequestException, json.JSONDecodeError, ValueError) as e:
+            last_err = e
+            if attempt + 1 < retries:
+                time.sleep(1)  # 缓一秒再掷骰子
+    raise last_err
 
 
 def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") -> dict:
@@ -147,8 +156,9 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") ->
     visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
     user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
     system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
+    temperature = 0.7 if mode == "detail" else 1.1  # 详情/追问求准,漫游求惊喜
 
-    data = chat(system, user_msg)
+    data = chat(system, user_msg, temperature=temperature)
 
     # 最小校验,防止模型抽风污染缓存
     if mode == "basic":

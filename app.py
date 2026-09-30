@@ -112,8 +112,8 @@ def parse_llm_json(text: str) -> dict:
     raise json.JSONDecodeError("没找到 JSON", text, 0)
 
 
-def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2) -> dict:
-    """发一次对话请求,返回解析后的 JSON(自动处理思维链模型的空正文)。
+def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2) -> tuple:
+    """发一次对话请求,返回 (解析后的 JSON, 思维链思考过程)。
     网络抖动或模型偶发写崩 JSON 时自动重试一次——温度高就是掷骰子,重掷一次通常就好。"""
     last_err: Exception = ValueError("未执行")
     for attempt in range(retries):
@@ -137,13 +137,14 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2)
             choice = resp.json()["choices"][0]
             msg = choice["message"]
 
+            reasoning = (msg.get("reasoning_content") or "").strip()  # 深度思考过程,单独留存
             content = (msg.get("content") or "").strip()
             if not content:
                 # flash 是思维链模型:思考在 reasoning_content 里,正文可能为空,兜底去思考内容里捞
-                content = (msg.get("reasoning_content") or "").strip()
+                content = reasoning
             if not content:
                 raise ValueError(f"模型返回为空(finish_reason={choice.get('finish_reason')})")
-            return parse_llm_json(content)
+            return parse_llm_json(content), reasoning
         except (requests.RequestException, json.JSONDecodeError, ValueError) as e:
             last_err = e
             if attempt + 1 < retries:
@@ -158,7 +159,7 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") ->
     system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
     temperature = 0.7 if mode == "detail" else 1.1  # 详情/追问求准,漫游求惊喜
 
-    data = chat(system, user_msg, temperature=temperature)
+    data, reasoning = chat(system, user_msg, temperature=temperature)
 
     # 最小校验,防止模型抽风污染缓存
     if mode == "basic":
@@ -166,6 +167,7 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") ->
             assert isinstance(data.get(key), list), f"模型返回缺少 {key}"
     elif mode == "deep":
         assert isinstance(data.get("dimensions"), list) and data["dimensions"], "模型返回缺少 dimensions"
+        data["thinking"] = reasoning  # 深挖把思维链一起存下来,前端可单独查看
     else:  # detail
         assert isinstance(data.get("detail"), str) and data["detail"].strip(), "模型返回缺少 detail"
         assert len(data["detail"]) <= 300, f"解释超长({len(data['detail'])}字)"
@@ -258,7 +260,7 @@ def ask():
 
     user_msg = f"中心词:{word or '(无)'}\n正在阅读的介绍:{context or '(无)'}\n我的问题:{question}"
     try:
-        data = chat(ASK_SYSTEM_PROMPT, user_msg, temperature=0.7)  # 追问求准,温度降回来
+        data, _reasoning = chat(ASK_SYSTEM_PROMPT, user_msg, temperature=0.7)  # 追问求准,温度降回来
         assert isinstance(data.get("answer"), str) and data["answer"].strip(), "模型返回缺少 answer"
     except requests.RequestException as e:
         return jsonify({"error": f"API 请求失败:{e}"}), 502

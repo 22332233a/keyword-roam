@@ -36,6 +36,10 @@
     max-width: 640px; margin: 10px auto 0; text-align: left;
     background: #1c1f28; border: 1px solid #2a2e3a; border-radius: 10px; padding: 12px 16px;
   }
+  .think-box {
+    font-size: 12px; color: #9aa0ad; line-height: 1.8;
+    font-family: Consolas, "Microsoft YaHei", monospace;
+  }
   .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; max-width: 1400px; margin: 0 auto; }
   .col h3 {
     font-size: 13px; color: #6a6f7c; margin-bottom: 10px;
@@ -205,7 +209,8 @@ function renderCenter(word, tag) {
        <button class="deep-btn lg" onclick="roamDeep('${w}')">🔍深挖</button>
        <button class="deep-btn lg" onclick="toggleDetail(this, '${w}')">📖详情</button>
      </div>
-     <div class="detail-box" id="center-detail" hidden></div>`;
+     <div class="detail-box" id="center-detail" hidden></div>
+     <div class="detail-box think-box" id="center-think" hidden></div>`;
 }
 
 /* 普通漫游:固定三栏 */
@@ -217,11 +222,27 @@ function renderBasic(d, cached) {
     col("↔ 相邻词(点词继续漫游)", d.similar);
 }
 
-/* 深挖:按类型动态生成维度列 */
+/* 深挖:按类型动态生成维度列,并附上🧠思考过程入口 */
+let currentThinking = "";
+
 function renderDeep(d, cached) {
-  renderCenter(d.word, `[${esc(d.type ?? "?")}] ${esc(d.summary ?? "")}${cached ? " · ✓缓存" : " · ✨"}`);
+  currentThinking = d.thinking || "";
+  const tag = `[${esc(d.type ?? "?")}] ${esc(d.summary ?? "")}${cached ? " · ✓缓存" : " · ✨"}`;
+  renderCenter(d.word, tag);
+  if (currentThinking) {
+    document.querySelector("#center .center-actions").innerHTML +=
+      `<button class="deep-btn lg" onclick="toggleThinking()">🧠思考过程</button>`;
+  }
   document.getElementById("cols").innerHTML =
     (d.dimensions ?? []).map(dim => col("◈ " + esc(dim.name), dim.items)).join("");
+}
+
+function toggleThinking() {
+  const box = document.getElementById("center-think");
+  if (!box) return;
+  if (!box.hidden) { box.hidden = true; return; }
+  box.textContent = currentThinking || "(本次没有记录到思考过程)";
+  box.hidden = false;
 }
 
 function renderChips() {

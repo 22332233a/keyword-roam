@@ -103,6 +103,18 @@ def save_asks(asks: dict) -> None:
     )
 
 
+LOG_FILE = BASE_DIR / "data" / "abnormal.log"
+END_PUNCT = tuple("。！？…～」』）)】!?\"'")   # 正文/详情正常收尾的标点
+
+
+def log_abnormal(kind: str, who: str, detail: str = "") -> None:
+    """异常数据留痕(腰斩的句子/空返回/绕路解析…),写 data/abnormal.log 供事后翻账。"""
+    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    stamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    with LOG_FILE.open("a", encoding="utf-8") as f:
+        f.write(f"[{stamp}] {kind} | {who} | {detail}\n")
+
+
 def parse_llm_json(text: str) -> dict:
     """从模型返回文本里抠 JSON:容忍 ```json 围栏和思考残留的前后废话。"""
     text = text.strip()
@@ -112,6 +124,9 @@ def parse_llm_json(text: str) -> dict:
         pass
     start, end = text.find("{"), text.rfind("}")
     if start != -1 and end > start:
+        if start > 0 or end < len(text) - 1:
+            # 没直接解析过、靠掐头去尾捞回来的,记一笔(模型前面夹了废话/思考残留)
+            log_abnormal("JSON绕路解析", f"文本{len(text)}字", f"头部:{text[:60]!r}")
         return json.loads(text[start : end + 1])
     raise json.JSONDecodeError("没找到 JSON", text, 0)
 
@@ -143,9 +158,14 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2)
 
             reasoning = (msg.get("reasoning_content") or "").strip()  # 深度思考过程,单独留存
             content = (msg.get("content") or "").strip()
+            who = user_msg.splitlines()[0][:40]   # 拿消息头当身份(一般是"关键词:xxx")
+            if choice.get("finish_reason") == "length":
+                # token 预算用尽被硬切,正文多半话说到一半——正是"话说一半"的病根
+                log_abnormal("max_tokens截断", who, f"正文尾部:{content[-60:]!r}")
             if not content:
                 # flash 是思维链模型:思考在 reasoning_content 里,正文可能为空,兜底去思考内容里捞
                 content = reasoning
+                log_abnormal("正文为空,兜底用思维链", who, f"思维链{len(reasoning)}字")
             if not content:
                 raise ValueError(f"模型返回为空(finish_reason={choice.get('finish_reason')})")
             return parse_llm_json(content), reasoning
@@ -153,6 +173,7 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2)
             last_err = e
             if attempt + 1 < retries:
                 time.sleep(1)  # 缓一秒再掷骰子
+    log_abnormal("重试耗尽", user_msg.splitlines()[0][:40], str(last_err)[:200])
     raise last_err
 
 
@@ -179,6 +200,9 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ct
     else:  # detail
         assert isinstance(data.get("detail"), str) and data["detail"].strip(), "模型返回缺少 detail"
         assert len(data["detail"]) <= 300, f"解释超长({len(data['detail'])}字)"
+        if not data["detail"].rstrip().endswith(END_PUNCT):
+            # 句子结尾不是句号类标点:多半是话说一半(预算截断或模型自己断片)
+            log_abnormal("详情疑似腰斩", word, f"结尾:{data['detail'][-60:]!r}")
     return data
 
 
@@ -225,8 +249,10 @@ def expand():
         ctx = request.args.get("ctx", "").strip()[:600]
         data = call_llm(word, flavor, list(cache.keys()), mode=mode, ctx=ctx)
     except requests.RequestException as e:
+        log_abnormal("API请求失败", word, str(e)[:200])
         return jsonify({"error": f"API 请求失败:{e}"}), 502
     except (json.JSONDecodeError, AssertionError, ValueError) as e:
+        log_abnormal("生成失败(重试耗尽或校验不过)", word, str(e)[:200])
         return jsonify({"error": f"模型返回解析失败:{e}"}), 502
 
     if mode == "basic":
@@ -277,8 +303,10 @@ def ask():
         data, _reasoning = chat(ASK_SYSTEM_PROMPT, user_msg, temperature=0.7)  # 追问求准,温度降回来
         assert isinstance(data.get("answer"), str) and data["answer"].strip(), "模型返回缺少 answer"
     except requests.RequestException as e:
+        log_abnormal("API请求失败(ask)", f"{word}::{question[:30]}", str(e)[:200])
         return jsonify({"error": f"API 请求失败:{e}"}), 502
     except (json.JSONDecodeError, AssertionError, ValueError) as e:
+        log_abnormal("回答生成失败(ask)", f"{word}::{question[:30]}", str(e)[:200])
         return jsonify({"error": f"回答生成失败:{e}"}), 502
 
     entry = {"word": word, "question": question, "answer": data["answer"], "time": int(time.time())}

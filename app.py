@@ -17,8 +17,11 @@ from flask import Flask, jsonify, render_template, request
 
 BASE_DIR = Path(__file__).resolve().parent
 CACHE_FILE = BASE_DIR / "data" / "cache.json"
+ASKS_FILE = BASE_DIR / "data" / "asks.json"
 
-API_URL = "https://api.deepseek.com/chat/completions"
+# 万能插座:任何 OpenAI 兼容端点都能接(Ollama 填 http://localhost:11434/v1 即可)
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com").rstrip("/")
+API_URL = LLM_BASE_URL + "/chat/completions"
 API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-flash")  # 漫游要快和便宜,flash 够用;要更聪明改 deepseek-v4-pro
 
@@ -61,6 +64,12 @@ DETAIL_SYSTEM_PROMPT = """你是词条解释器。用不超过 150 个汉字解�
 3. 超过 150 字算失败,宁可砍细节
 4. 只输出 JSON:{"word":"...","detail":"150字以内的解释"}"""
 
+ASK_SYSTEM_PROMPT = """你是追问助手。用户正在阅读关于某个关键词的介绍,对里面不熟悉的说法产生了疑问。
+基于给出的上下文回答用户的问题,要求:
+1. 不超过 150 个汉字,直接回答问题本身,信息密度高,面向没背景的普通人
+2. 上下文没有的信息也可以答,但不确定就诚实说不确定,别编
+3. 只输出 JSON:{"answer":"150字以内的回答"}"""
+
 app = Flask(__name__)
 
 
@@ -77,6 +86,19 @@ def save_cache(cache: dict) -> None:
     )
 
 
+def load_asks() -> dict:
+    if ASKS_FILE.exists():
+        return json.loads(ASKS_FILE.read_text(encoding="utf-8"))
+    return {}
+
+
+def save_asks(asks: dict) -> None:
+    ASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    ASKS_FILE.write_text(
+        json.dumps(asks, ensure_ascii=False, indent=1), encoding="utf-8"
+    )
+
+
 def parse_llm_json(text: str) -> dict:
     """从模型返回文本里抠 JSON:容忍 ```json 围栏和思考残留的前后废话。"""
     text = text.strip()
@@ -90,12 +112,8 @@ def parse_llm_json(text: str) -> dict:
     raise json.JSONDecodeError("没找到 JSON", text, 0)
 
 
-def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") -> dict:
-    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。"""
-    visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
-    user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
-    system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
-
+def chat(system: str, user_msg: str, temperature: float = 1.1) -> dict:
+    """发一次对话请求,返回解析后的 JSON(自动处理思维链模型的空正文)。"""
     resp = requests.post(
         API_URL,
         headers={"Authorization": f"Bearer {API_KEY}"},
@@ -106,7 +124,7 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") ->
                 {"role": "user", "content": user_msg},
             ],
             "response_format": {"type": "json_object"},
-            "temperature": 1.1,  # 漫游要的是惊喜,调高一点
+            "temperature": temperature,  # 漫游要的是惊喜,调高一点
             "max_tokens": 4000,  # flash 是思维链模型,思考也吃 token 额度,给足
         },
         timeout=90,
@@ -121,8 +139,16 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") ->
         content = (msg.get("reasoning_content") or "").strip()
     if not content:
         raise ValueError(f"模型返回为空(finish_reason={choice.get('finish_reason')})")
+    return parse_llm_json(content)
 
-    data = parse_llm_json(content)
+
+def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic") -> dict:
+    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。"""
+    visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
+    user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
+    system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
+
+    data = chat(system, user_msg)
 
     # 最小校验,防止模型抽风污染缓存
     if mode == "basic":
@@ -143,7 +169,8 @@ def index():
 
 @app.route("/api/expand")
 def expand():
-    if not API_KEY:
+    if not API_KEY and "deepseek.com" in API_URL:
+        # 自建/本地端点通常不需要 key,只在走 DeepSeek 官方时强制
         return jsonify({"error": "未设置 DEEPSEEK_API_KEY 环境变量,设置后重启本程序"}), 500
 
     word = request.args.get("word", "").strip()
@@ -198,6 +225,40 @@ def expand():
 
     save_cache(cache)
     return jsonify({"cached": False, "data": data})
+
+
+@app.route("/api/ask")
+def ask():
+    """详情划词后的追问:带上下文的 150 字快答,按 词+问题 缓存。"""
+    word = request.args.get("word", "").strip()
+    question = request.args.get("q", "").strip()
+    context = request.args.get("ctx", "").strip()[:600]
+    if not question:
+        return jsonify({"error": "问题不能为空"}), 400
+    if len(question) > 100:
+        return jsonify({"error": "问题太长了,100 字以内"}), 400
+
+    asks = load_asks()
+    key = f"{word}:::{question}"
+    if key in asks:
+        return jsonify({"cached": True, "data": asks[key]})
+
+    if not API_KEY and "deepseek.com" in API_URL:
+        return jsonify({"error": "未设置 DEEPSEEK_API_KEY 环境变量,设置后重启本程序"}), 500
+
+    user_msg = f"中心词:{word or '(无)'}\n正在阅读的介绍:{context or '(无)'}\n我的问题:{question}"
+    try:
+        data = chat(ASK_SYSTEM_PROMPT, user_msg, temperature=0.7)  # 追问求准,温度降回来
+        assert isinstance(data.get("answer"), str) and data["answer"].strip(), "模型返回缺少 answer"
+    except requests.RequestException as e:
+        return jsonify({"error": f"API 请求失败:{e}"}), 502
+    except (json.JSONDecodeError, AssertionError, ValueError) as e:
+        return jsonify({"error": f"回答生成失败:{e}"}), 502
+
+    entry = {"word": word, "question": question, "answer": data["answer"], "time": int(time.time())}
+    asks[key] = entry
+    save_asks(asks)
+    return jsonify({"cached": False, "data": entry})
 
 
 @app.route("/api/cache")

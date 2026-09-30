@@ -70,6 +70,17 @@
     font-size: 13px; color: #8a8f9c; cursor: pointer;
   }
   .chip:hover { color: #7d9dff; border-color: #4a7dff; }
+  /* 划词快问浮层 */
+  #sel-menu {
+    position: absolute; z-index: 100; max-width: 400px;
+    background: #232734; border: 1px solid #4a7dff; border-radius: 10px;
+    padding: 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,.5);
+  }
+  #sel-menu .sel-term { font-weight: 700; color: #f2f3f7; margin-bottom: 8px; }
+  #sel-menu .sel-actions { display: flex; gap: 8px; }
+  #sel-menu input { width: 100%; font-size: 13px; margin-top: 8px; }
+  #sel-menu .ans { font-size: 13px; line-height: 1.7; color: #c8cbd4; margin-top: 8px; white-space: pre-wrap; }
+  #sel-menu .sel-close { position: absolute; top: 4px; right: 8px; cursor: pointer; color: #6a6f7c; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -86,8 +97,20 @@
 
   <div id="history"><h3>足迹(自动保存,重启不丢;点词回游)</h3><div id="chips"></div></div>
 
+  <div id="sel-menu" hidden>
+    <div class="sel-close" onclick="hideSel()">✕</div>
+    <div class="sel-term" id="sel-term"></div>
+    <div class="sel-actions" id="sel-actions">
+      <button class="deep-btn" onclick="askWhat()">是什么?</button>
+      <button class="deep-btn" onclick="showAskInput()">追问…</button>
+    </div>
+    <input id="sel-input" hidden placeholder="你的问题,回车发送">
+    <div class="ans" id="sel-ans"></div>
+  </div>
+
 <script>
 const visited = new Set();
+let currentWord = "";   // 当前中心词,追问时作为上下文
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g,
@@ -149,6 +172,7 @@ async function roamDeep(word) { await go(word, "deep"); }
 async function go(word, mode) {
   word = (word || "").trim();
   if (!word) return;
+  currentWord = word;
   document.getElementById("word-input").value = word;
   const status = document.getElementById("status");
   status.textContent = mode === "deep" ? "深挖中…(思维链模型,多等几秒)" : "问 AI 中…";
@@ -210,6 +234,78 @@ function roamFromInput() {
   roam(document.getElementById("word-input").value);
 }
 
+/* ===== 划词快问:在详情文字里选中词,弹出迷你菜单 ===== */
+const selMenu = document.getElementById("sel-menu");
+let selTerm = "";
+let selContext = "";
+
+document.addEventListener("mouseup", e => {
+  if (selMenu.contains(e.target)) return;   // 菜单内部点击不处理
+  setTimeout(() => {
+    const sel = window.getSelection();
+    const text = sel ? String(sel).trim() : "";
+    const box = sel?.anchorNode?.parentElement?.closest(".detail-box");
+    if (!box || sel.isCollapsed || text.length < 2 || text.length > 30) {
+      selMenu.hidden = true;
+      return;
+    }
+    selTerm = text;
+    selContext = box.textContent.trim().slice(0, 500);   // 详情原文当追问上下文
+    document.getElementById("sel-term").textContent = `「${text}」`;
+    document.getElementById("sel-ans").textContent = "";
+    document.getElementById("sel-input").hidden = true;
+    document.getElementById("sel-actions").hidden = false;
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    selMenu.style.top = rect.bottom + window.scrollY + 8 + "px";
+    selMenu.style.left = Math.max(8, rect.left + window.scrollX) + "px";
+    selMenu.hidden = false;
+  }, 0);
+});
+
+function hideSel() {
+  selMenu.hidden = true;
+  window.getSelection()?.removeAllRanges();
+}
+
+/* "是什么?"——选中的词直接走现成的详情模式,零新增后端 */
+async function askWhat() {
+  const ans = document.getElementById("sel-ans");
+  ans.textContent = "查询中…";
+  document.getElementById("sel-actions").hidden = true;
+  try {
+    const flavor = document.getElementById("flavor-input").value;
+    const resp = await fetch(`/api/expand?word=${encodeURIComponent(selTerm)}&mode=detail&flavor=${encodeURIComponent(flavor)}`);
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(body.error || resp.statusText);
+    ans.textContent = body.data.detail;
+    visited.delete(selTerm); visited.add(selTerm); renderChips();
+  } catch (err) {
+    ans.textContent = "出错:" + err.message;
+  }
+}
+
+/* "追问…"——带中心词和详情原文当上下文,走 /api/ask */
+function showAskInput() {
+  document.getElementById("sel-actions").hidden = true;
+  const inp = document.getElementById("sel-input");
+  inp.hidden = false;
+  inp.focus();
+}
+async function sendAsk() {
+  const q = document.getElementById("sel-input").value.trim();
+  if (!q) return;
+  const ans = document.getElementById("sel-ans");
+  ans.textContent = "思考中…";
+  try {
+    const resp = await fetch(`/api/ask?word=${encodeURIComponent(currentWord)}&q=${encodeURIComponent(q)}&ctx=${encodeURIComponent(selContext)}`);
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(body.error || resp.statusText);
+    ans.textContent = body.data.answer;
+  } catch (err) {
+    ans.textContent = "出错:" + err.message;
+  }
+}
+
 // 启动时从后端加载历史足迹(存在 data/cache.json 里,重启不丢)
 async function loadHistory() {
   try {
@@ -223,6 +319,9 @@ loadHistory();
 
 document.getElementById("word-input").addEventListener("keydown", e => {
   if (e.key === "Enter") roamFromInput();
+});
+document.getElementById("sel-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") sendAsk();
 });
 </script>
 </body>

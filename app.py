@@ -75,6 +75,13 @@ ASK_SYSTEM_PROMPT = """你是追问助手。用户正在阅读关于某个关键
 2. 上下文没有的信息也可以答,但不确定就诚实说不确定,别编
 3. 只输出 JSON:{"answer":"150字以内的回答"}"""
 
+CHAT_SYSTEM_PROMPT = """你是阅读陪聊助手。用户正在读关于某个关键词的介绍,在对话条里跟你连续追问。
+基于关键词、介绍原文和之前的对话回答最新问题,要求:
+1. 不超过 300 个汉字,信息密度高,面向没背景的普通人,别行话套行话
+2. 对话里聊过的内容直接接着说,别当新问题重新开场
+3. 上下文没有的信息也可以答,不确定就诚实说不确定,别编
+4. 只输出 JSON:{"answer":"300字以内的回答"}"""
+
 app = Flask(__name__)
 
 
@@ -136,8 +143,10 @@ def parse_llm_json(text: str) -> dict:
     raise json.JSONDecodeError("没找到 JSON", text, 0)
 
 
-def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2) -> tuple:
+def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2,
+         extra_msgs: list | None = None) -> tuple:
     """发一次对话请求,返回 (解析后的 JSON, 思维链思考过程)。
+    extra_msgs:多轮对话的中间消息(user/assistant 交替,最后一条应是 assistant),插在系统提示与本次提问之间。
     网络抖动或模型偶发写崩 JSON 时自动重试一次——温度高就是掷骰子,重掷一次通常就好。"""
     last_err: Exception = ValueError("未执行")
     for attempt in range(retries):
@@ -149,6 +158,7 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2)
                     "model": MODEL,
                     "messages": [
                         {"role": "system", "content": system},
+                        *(extra_msgs or []),
                         {"role": "user", "content": user_msg},
                     ],
                     "response_format": {"type": "json_object"},
@@ -349,6 +359,58 @@ def ask():
     entry = {"word": word, "question": question, "answer": data["answer"], "time": int(time.time())}
     asks[key] = entry
     save_asks(asks)
+    return jsonify({"cached": False, "data": entry})
+
+
+@app.route("/api/chat", methods=["POST"])
+def chat_api():
+    """底部对话条:绑在当前词上的多轮追问。
+    首轮吃 asks 单轮缓存(划词追问问过同样的就不花钱);对话本身不持久化(会话级);
+    上下文带最近 6 轮,回答封顶 300 字,超长自动重掷一次。"""
+    if not API_KEY and "deepseek.com" in API_URL:
+        return jsonify({"error": "未设置 DEEPSEEK_API_KEY 环境变量,设置后重启本程序"}), 500
+
+    body = request.get_json(silent=True) or {}
+    word = str(body.get("word") or "").strip()[:30]
+    q = str(body.get("q") or "").strip()
+    context = str(body.get("ctx") or "")[:600]
+    if not q:
+        return jsonify({"error": "问题不能为空"}), 400
+    if len(q) > 100:
+        return jsonify({"error": "问题太长了,100 字以内"}), 400
+    history = [
+        {"role": "user" if m.get("role") == "user" else "assistant",
+         "content": str(m.get("content") or "")[:400]}
+        for m in (body.get("history") or [])[-12:]
+        if isinstance(m, dict) and str(m.get("content") or "").strip()
+    ]
+
+    asks = load_asks()
+    key = f"{word}:::{q}"
+    if not history and key in asks:  # 只有无上下文的首轮吃缓存:带语境的回答不该覆盖原答案
+        return jsonify({"cached": True, "data": asks[key]})
+
+    user_msg = f"中心词:{word or '(无)'}\n正在阅读的介绍:{context or '(无)'}\n我的问题:{q}"
+    last_err: Exception = ValueError("未执行")
+    answer = ""
+    for _attempt in range(2):  # 300 字封顶,超长当废品重掷
+        try:
+            data, _reasoning = chat(CHAT_SYSTEM_PROMPT, user_msg, temperature=0.7, extra_msgs=history)
+            answer = data.get("answer")
+            assert isinstance(answer, str) and answer.strip(), "模型返回缺少 answer"
+            assert len(answer) <= 350, f"回答超长({len(answer)}字)"
+            break
+        except (requests.RequestException, json.JSONDecodeError, AssertionError, ValueError) as e:
+            last_err = e
+            answer = ""
+    else:
+        log_abnormal("对话生成失败", f"{word}::{q[:30]}", str(last_err)[:200])
+        return jsonify({"error": f"对话生成失败:{last_err}"}), 502
+
+    entry = {"word": word, "question": q, "answer": answer.strip(), "time": int(time.time())}
+    if not history:  # 首轮问答顺手进 asks.json,划词追问同问题直接命中
+        asks[key] = entry
+        save_asks(asks)
     return jsonify({"cached": False, "data": entry})
 
 

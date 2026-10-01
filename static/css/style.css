@@ -1,0 +1,562 @@
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #12141a;
+      color: #d8dae0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", system-ui, sans-serif;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    input {
+      background: #1c1f28;
+      border: 1px solid #333747;
+      color: #d8dae0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 15px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #4a7dff;
+    }
+
+    #word-input {
+      width: 220px;
+    }
+
+    #flavor-input {
+      width: 320px;
+      font-size: 13px;
+      color: #8a8f9c;
+    }
+
+    button {
+      background: #4a7dff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #3a66e0;
+    }
+
+    #status {
+      text-align: center;
+      color: #6a6f7c;
+      min-height: 22px;
+      margin-bottom: 10px;
+    }
+
+    .error {
+      color: #e06c75;
+      text-align: center;
+    }
+
+    /* ===== 主从布局:左边词列表,右边选中词的版面 ===== */
+    #layout {
+      display: flex;
+      gap: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+      align-items: flex-start;
+    }
+
+    #sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 12px;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+    }
+
+    #main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .s-group h3 {
+      font-size: 13px;
+      color: #6a6f7c;
+      letter-spacing: 2px;
+      margin: 16px 0 8px;
+    }
+
+    .s-item {
+      background: #1c1f28;
+      border: 1px solid #2a2e3a;
+      border-radius: 8px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+      transition: border-color .6s, background .6s;
+    }
+
+    .s-item.flash {
+      border-color: #4a7dff;
+      background: #1a2233;
+    }
+
+    /* 目录跳转过来时闪一下 */
+    .s-item .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .s-item .w {
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .s-item .w:hover {
+      color: #7d9dff;
+    }
+
+    .s-item.seen .w {
+      color: #5da97a;
+    }
+
+    /* 漫游过的词 */
+    .s-item .mini {
+      margin-left: auto;
+      flex-shrink: 0;
+      background: none;
+      border: 1px solid #3a3f4e;
+      color: #b48aff;
+      border-radius: 6px;
+      padding: 1px 7px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .s-item .mini:hover {
+      border-color: #b48aff;
+    }
+
+    .s-item .note {
+      font-size: 12px;
+      color: #8a8f9c;
+      margin-top: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ===== 右侧空地:纯文字目录(分类+关键词),点击跳转左栏对应位置 ===== */
+    #toc {
+      width: 180px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 12px;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+      font-size: 17px;
+      color: #8a8f9c;
+    }
+
+    #toc:empty {
+      display: none;
+    }
+
+    /* 没内容时不占位 */
+    .toc-g {
+      margin-bottom: 16px;
+    }
+
+    .toc-t {
+      color: #6a6f7c;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+
+    .toc-t:hover {
+      color: #7d9dff;
+    }
+
+    .toc-w {
+      display: inline-block;
+      margin: 0 9px 5px 0;
+      cursor: pointer;
+      color: #9aa6c0;
+    }
+
+    .toc-w:hover {
+      color: #7d9dff;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 1250px) {
+      #toc {
+        display: none;
+      }
+    }
+
+    /* 窗口窄了藏起来,不挤正文 */
+
+    #center {
+      text-align: center;
+      font-size: 40px;
+      font-weight: 700;
+      color: #f2f3f7;
+      margin: 6px 0 24px;
+      letter-spacing: 2px;
+    }
+
+    #center small {
+      display: block;
+      font-size: 13px;
+      color: #6a6f7c;
+      font-weight: 400;
+      margin-top: 6px;
+    }
+
+    .center-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .deep-btn.lg {
+      font-size: 14px;
+      padding: 4px 14px;
+    }
+
+    .links {
+      font-size: 13px;
+    }
+
+    .links a {
+      color: #5b83d6;
+      text-decoration: none;
+      margin: 0 5px;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+
+    .regen-link {
+      color: #5b83d6;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 6px;
+    }
+
+    .regen-link:hover {
+      text-decoration: underline;
+    }
+
+    #center .detail-box {
+      max-width: 760px;
+      margin: 14px auto 0;
+      text-align: left;
+      background: #1c1f28;
+      border: 1px solid #2a2e3a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #c8cbd4;
+      white-space: pre-wrap;
+    }
+
+    /* 详情归属标签:共用详情框里标明这段解释是谁的 */
+    #center .detail-box .d-owner {
+      color: #7d9dff;
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    /* 对话条:绑当前词的多轮追问,会话级不持久化 */
+    .chat-box .chat-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+
+    .chat-m {
+      margin: 3px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .chat-m.you { color: #9aa6c0; }
+    .chat-m.ai { color: #e2e4ea; }
+    .chat-m.err { color: #e06c75; }
+
+    #chat-input {
+      width: 100%;
+      font-size: 13px;
+      padding: 7px 10px;
+    }
+
+    .think-box {
+      font-size: 12px;
+      color: #9aa0ad;
+      line-height: 1.8;
+      font-family: Consolas, "Microsoft YaHei", monospace;
+    }
+
+    /* 🧭漫游结果折叠框:三组词表并排的小卡片 */
+    .r-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      text-align: left;
+    }
+
+    .r-grid h4 {
+      font-size: 12px;
+      color: #6a6f7c;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .r-item {
+      border: 1px solid #2a2e3a;
+      border-radius: 8px;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+    }
+
+    .r-item .rrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .r-item .rw {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .r-item .rw:hover {
+      color: #7d9dff;
+    }
+
+    .r-item.seen .rw {
+      color: #5da97a;
+    }
+
+    .r-item .rb {
+      margin-left: auto;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: #5b83d6;
+      text-decoration: none;
+    }
+
+    .r-item .rb:hover {
+      text-decoration: underline;
+      color: #7d9dff;
+    }
+
+    .r-item .note {
+      font-size: 11px;
+      color: #8a8f9c;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 900px) {
+      .r-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    #history {
+      max-width: 1600px;
+      margin: 0 auto 24px;   /* 足迹当书签栏用,顶在头部下方;默认折叠两行不挤阅读区 */
+    }
+
+    #history h3 {
+      font-size: 13px;
+      color: #6a6f7c;
+      margin-bottom: 8px;
+    }
+
+    #chips-wrap {
+      overflow: hidden;
+    }
+
+    #chips-wrap.collapsed {
+      max-height: 78px;
+    }
+
+    /* 默认只露出两行 */
+    #chips-toggle {
+      color: #5b83d6;
+      cursor: pointer;
+      font-size: 13px;
+      user-select: none;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    #chips-toggle:hover {
+      text-decoration: underline;
+    }
+
+    .chip {
+      display: inline-block;
+      background: #1c1f28;
+      border: 1px solid #2a2e3a;
+      border-radius: 999px;
+      padding: 4px 12px;
+      margin: 0 6px 6px 0;
+      font-size: 13px;
+      color: #8a8f9c;
+      cursor: pointer;
+    }
+
+    .chip:hover {
+      color: #7d9dff;
+      border-color: #4a7dff;
+    }
+
+    /* 足迹数据类型色点(代替原先一排 emoji,省一半宽度) */
+    .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+
+    .dot-roam { background: #5da97a; }
+    .dot-deep { background: #b48aff; }
+    .dot-detail { background: #5b83d6; }
+
+    #chip-search {
+      width: 150px;
+      font-size: 13px;
+      padding: 4px 10px;
+      vertical-align: middle;
+    }
+
+    .ftab.active {
+      border-color: #4a7dff;
+      color: #7d9dff;
+      background: #1a2233;
+    }
+
+    /* 划词快问浮层 */
+    #sel-menu {
+      position: absolute;
+      z-index: 100;
+      max-width: 400px;
+      background: #232734;
+      border: 1px solid #4a7dff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .5);
+    }
+
+    #sel-menu .sel-term {
+      font-weight: 700;
+      color: #f2f3f7;
+      margin-bottom: 8px;
+    }
+
+    #sel-menu .sel-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    #sel-menu input {
+      width: 100%;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    #sel-menu .ans {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #c8cbd4;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+
+    #sel-menu .sel-close {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      cursor: pointer;
+      color: #6a6f7c;
+      font-size: 12px;
+    }
+    /* ===== 🗺 足迹地图覆盖层 ===== */
+    #map-view {
+      position: fixed;
+      inset: 0;
+      background: #12141a;
+      z-index: 150;
+    }
+
+    #map-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 8px 14px;
+      background: #1c1f28;
+      border-bottom: 1px solid #2a2e3a;
+      font-size: 13px;
+      color: #8a8f9c;
+    }
+
+    #map-bar label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+    #map-bar button {
+      font-size: 12px;
+      padding: 4px 12px;
+      background: #232734;
+      color: #b8bdc9;
+      border: 1px solid #3a3f4e;
+    }
+
+    #map-bar button:hover { border-color: #4a7dff; }
+    #map-bar button.active { background: #ffb454; color: #12141a; border-color: #ffb454; }
+
+    .map-note { color: #8a8f9c; }
+    #map-path-info { color: #ffb454; max-width: 60vw; }
+
+    #map-close { margin-left: auto; cursor: pointer; color: #6a6f7c; }
+    #map-close:hover { color: #e06c75; }
+
+    #map-canvas {
+      display: block;
+      width: 100%;
+      height: calc(100vh - 45px);
+      cursor: grab;
+    }
+
+  

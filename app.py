@@ -414,6 +414,41 @@ def chat_api():
     return jsonify({"cached": False, "data": entry})
 
 
+@app.route("/api/graph")
+def graph():
+    """足迹地图数据:节点=缓存词,边=两端都在缓存的漫游/深挖关系,
+    frontier=被提及但还没走到的词(挂在其首个出处的缓存词上,前端画成空心前沿)。"""
+    cache = load_cache()
+    nodes, edges, pairs = [], [], set()
+    f_seen = {}
+    for w, d in cache.items():
+        feats = []
+        if d.get("parents"):
+            feats.append("roam")
+        if d.get("deep"):
+            feats.append("deep")
+        if d.get("detail"):
+            feats.append("detail")
+        nodes.append({"word": w, "feats": feats, "time": d.get("time") or 0})
+        rels = [(g, d.get(g) or []) for g in ("parents", "children", "similar")]
+        deep = d.get("deep") or {}
+        rels.append(("deep", [it for dim in deep.get("dimensions") or [] for it in dim.get("items") or []]))
+        for rel, items in rels:
+            for it in items:
+                nw = str((it or {}).get("word") or "").strip()
+                if not nw or nw == w:
+                    continue
+                if nw in cache:
+                    pair = tuple(sorted((w, nw)))
+                    if pair not in pairs:
+                        pairs.add(pair)
+                        edges.append({"a": w, "b": nw, "rel": rel})
+                elif nw not in f_seen:
+                    f_seen[nw] = w
+    frontier = [{"word": nw, "anchor": a} for nw, a in f_seen.items()]
+    return jsonify({"nodes": nodes, "edges": edges, "frontier": frontier})
+
+
 @app.route("/api/cache")
 def cache_info():
     """足迹:已漫游过的词,按最近漫游排序,带功能标记(前端分类筛选用)。"""

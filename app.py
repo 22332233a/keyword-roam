@@ -187,9 +187,19 @@ def _validate(data: dict, mode: str, word: str, reasoning: str) -> None:
     if mode == "basic":
         for key in ("parents", "children", "similar"):
             assert isinstance(data.get(key), list), f"模型返回缺少 {key}"
+        # 数量下限:提示词要 2~3/4~8/8~12,但只查字段会被"懒骰子"钻空子
+        # (真出过 children=1/similar=0 的合法 JSON)。阈值定在正常水位一半,拦懒不冤好。
+        n_p, n_c, n_s = len(data["parents"]), len(data["children"]), len(data["similar"])
+        if n_p < 1 or n_c < 3 or n_s < 5:
+            log_abnormal("漫游数据过稀", word, f"parents={n_p}/children={n_c}/similar={n_s}")
+            raise AssertionError(f"漫游数据过稀(parents={n_p}/children={n_c}/similar={n_s}),重掷")
         data["thinking"] = reasoning  # 漫游也把思维链存下来,前端可单独查看
     elif mode == "deep":
         assert isinstance(data.get("dimensions"), list) and data["dimensions"], "模型返回缺少 dimensions"
+        n_items = sum(len(d.get("items") or []) for d in data["dimensions"])
+        if len(data["dimensions"]) < 3 or n_items < 8:
+            log_abnormal("深挖数据过稀", word, f"{len(data['dimensions'])}个维度/共{n_items}条")
+            raise AssertionError(f"深挖数据过稀({len(data['dimensions'])}个维度/共{n_items}条),重掷")
         data["thinking"] = reasoning  # 深挖把思维链一起存下来,前端可单独查看
     else:  # detail
         assert isinstance(data.get("detail"), str) and data["detail"].strip(), "模型返回缺少 detail"

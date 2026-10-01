@@ -1,140 +1,485 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
+
 <head>
-<meta charset="utf-8">
-<title>关键词漫游器</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #12141a; color: #d8dae0; min-height: 100vh;
-    font-family: "Microsoft YaHei", system-ui, sans-serif; padding: 24px;
-  }
-  header { display: flex; gap: 8px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
-  input {
-    background: #1c1f28; border: 1px solid #333747; color: #d8dae0;
-    border-radius: 8px; padding: 10px 14px; font-size: 15px;
-  }
-  input:focus { outline: none; border-color: #4a7dff; }
-  #word-input { width: 220px; }
-  #flavor-input { width: 320px; font-size: 13px; color: #8a8f9c; }
-  button {
-    background: #4a7dff; color: white; border: none; border-radius: 8px;
-    padding: 10px 22px; font-size: 15px; cursor: pointer;
-  }
-  button:hover { background: #3a66e0; }
-  #status { text-align: center; color: #6a6f7c; min-height: 22px; margin-bottom: 10px; }
-  .error { color: #e06c75; text-align: center; }
+  <meta charset="utf-8">
+  <title>关键词漫游器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  /* ===== 主从布局:左边词列表,右边选中词的版面 ===== */
-  #layout { display: flex; gap: 24px; max-width: 1600px; margin: 0 auto; align-items: flex-start; }
-  #sidebar {
-    width: 300px; flex-shrink: 0;
-    position: sticky; top: 12px;
-    max-height: calc(100vh - 24px); overflow-y: auto;
-  }
-  #main { flex: 1; min-width: 0; }
-  .s-group h3 {
-    font-size: 13px; color: #6a6f7c; letter-spacing: 2px; margin: 16px 0 8px;
-  }
-  .s-item {
-    background: #1c1f28; border: 1px solid #2a2e3a; border-radius: 8px;
-    padding: 7px 10px; margin-bottom: 6px;
-    transition: border-color .6s, background .6s;
-  }
-  .s-item.flash { border-color: #4a7dff; background: #1a2233; }   /* 目录跳转过来时闪一下 */
-  .s-item .row { display: flex; align-items: center; gap: 8px; }
-  .s-item .w {
-    cursor: pointer; font-size: 15px; font-weight: 600;
-    min-width: 0; overflow-wrap: anywhere;
-  }
-  .s-item .w:hover { color: #7d9dff; }
-  .s-item.seen .w { color: #5da97a; }        /* 漫游过的词 */
-  .s-item .mini {
-    margin-left: auto; flex-shrink: 0;
-    background: none; border: 1px solid #3a3f4e; color: #b48aff;
-    border-radius: 6px; padding: 1px 7px; font-size: 12px; cursor: pointer;
-  }
-  .s-item .mini:hover { border-color: #b48aff; }
-  .s-item .note {
-    font-size: 12px; color: #8a8f9c; margin-top: 3px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
+    body {
+      background: #12141a;
+      color: #d8dae0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", system-ui, sans-serif;
+      padding: 24px;
+    }
 
-  /* ===== 右侧空地:纯文字目录(分类+关键词),点击跳转左栏对应位置 ===== */
-  #toc {
-    width: 180px; flex-shrink: 0;
-    position: sticky; top: 12px;
-    max-height: calc(100vh - 24px); overflow-y: auto;
-    font-size: 12px; color: #8a8f9c;
-  }
-  #toc:empty { display: none; }   /* 没内容时不占位 */
-  .toc-g { margin-bottom: 16px; }
-  .toc-t { color: #6a6f7c; letter-spacing: 1px; margin-bottom: 5px; cursor: pointer; }
-  .toc-t:hover { color: #7d9dff; }
-  .toc-w { display: inline-block; margin: 0 9px 5px 0; cursor: pointer; color: #9aa6c0; }
-  .toc-w:hover { color: #7d9dff; text-decoration: underline; }
-  @media (max-width: 1250px) { #toc { display: none; } }   /* 窗口窄了藏起来,不挤正文 */
+    header {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
 
-  #center {
-    text-align: center; font-size: 40px; font-weight: 700;
-    color: #f2f3f7; margin: 6px 0 24px; letter-spacing: 2px;
-  }
-  #center small { display: block; font-size: 13px; color: #6a6f7c; font-weight: 400; margin-top: 6px; }
-  .center-actions { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
-  .deep-btn.lg { font-size: 14px; padding: 4px 14px; }
-  .links { font-size: 13px; }
-  .links a { color: #5b83d6; text-decoration: none; margin: 0 5px; }
-  .links a:hover { text-decoration: underline; }
-  .regen-link { color: #5b83d6; cursor: pointer; font-size: 12px; margin-left: 6px; }
-  .regen-link:hover { text-decoration: underline; }
-  #center .detail-box {
-    max-width: 760px; margin: 14px auto 0; text-align: left;
-    background: #1c1f28; border: 1px solid #2a2e3a; border-radius: 10px; padding: 12px 16px;
-    font-size: 14px; line-height: 1.8; color: #c8cbd4; white-space: pre-wrap;
-  }
-  .think-box {
-    font-size: 12px; color: #9aa0ad; line-height: 1.8;
-    font-family: Consolas, "Microsoft YaHei", monospace;
-  }
-  /* 🧭漫游结果折叠框:三组词表并排的小卡片 */
-  .r-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: left; }
-  .r-grid h4 { font-size: 12px; color: #6a6f7c; margin-bottom: 6px; letter-spacing: 1px; }
-  .r-item { border: 1px solid #2a2e3a; border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; }
-  .r-item .rrow { display: flex; align-items: center; gap: 8px; }
-  .r-item .rw { cursor: pointer; font-weight: 600; font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
-  .r-item .rw:hover { color: #7d9dff; }
-  .r-item.seen .rw { color: #5da97a; }
-  .r-item .rb { margin-left: auto; flex-shrink: 0; font-size: 11px; color: #5b83d6; text-decoration: none; }
-  .r-item .rb:hover { text-decoration: underline; color: #7d9dff; }
-  .r-item .note { font-size: 11px; color: #8a8f9c; margin-top: 2px; }
-  @media (max-width: 900px) { .r-grid { grid-template-columns: 1fr; } }
-  #history { max-width: 1600px; margin: 30px auto 0; }
-  #history h3 { font-size: 13px; color: #6a6f7c; margin-bottom: 8px; }
-  #chips-wrap { overflow: hidden; }
-  #chips-wrap.collapsed { max-height: 78px; }   /* 默认只露出两行 */
-  #chips-toggle { color: #5b83d6; cursor: pointer; font-size: 13px; user-select: none; display: inline-block; margin-top: 4px; }
-  #chips-toggle:hover { text-decoration: underline; }
-  .chip {
-    display: inline-block; background: #1c1f28; border: 1px solid #2a2e3a;
-    border-radius: 999px; padding: 4px 12px; margin: 0 6px 6px 0;
-    font-size: 13px; color: #8a8f9c; cursor: pointer;
-  }
-  .chip:hover { color: #7d9dff; border-color: #4a7dff; }
-  .ftab.active { border-color: #4a7dff; color: #7d9dff; background: #1a2233; }
-  /* 划词快问浮层 */
-  #sel-menu {
-    position: absolute; z-index: 100; max-width: 400px;
-    background: #232734; border: 1px solid #4a7dff; border-radius: 10px;
-    padding: 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,.5);
-  }
-  #sel-menu .sel-term { font-weight: 700; color: #f2f3f7; margin-bottom: 8px; }
-  #sel-menu .sel-actions { display: flex; gap: 8px; }
-  #sel-menu input { width: 100%; font-size: 13px; margin-top: 8px; }
-  #sel-menu .ans { font-size: 13px; line-height: 1.7; color: #c8cbd4; margin-top: 8px; white-space: pre-wrap; }
-  #sel-menu .sel-close { position: absolute; top: 4px; right: 8px; cursor: pointer; color: #6a6f7c; font-size: 12px; }
-</style>
+    input {
+      background: #1c1f28;
+      border: 1px solid #333747;
+      color: #d8dae0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 15px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #4a7dff;
+    }
+
+    #word-input {
+      width: 220px;
+    }
+
+    #flavor-input {
+      width: 320px;
+      font-size: 13px;
+      color: #8a8f9c;
+    }
+
+    button {
+      background: #4a7dff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #3a66e0;
+    }
+
+    #status {
+      text-align: center;
+      color: #6a6f7c;
+      min-height: 22px;
+      margin-bottom: 10px;
+    }
+
+    .error {
+      color: #e06c75;
+      text-align: center;
+    }
+
+    /* ===== 主从布局:左边词列表,右边选中词的版面 ===== */
+    #layout {
+      display: flex;
+      gap: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+      align-items: flex-start;
+    }
+
+    #sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 12px;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+    }
+
+    #main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .s-group h3 {
+      font-size: 13px;
+      color: #6a6f7c;
+      letter-spacing: 2px;
+      margin: 16px 0 8px;
+    }
+
+    .s-item {
+      background: #1c1f28;
+      border: 1px solid #2a2e3a;
+      border-radius: 8px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+      transition: border-color .6s, background .6s;
+    }
+
+    .s-item.flash {
+      border-color: #4a7dff;
+      background: #1a2233;
+    }
+
+    /* 目录跳转过来时闪一下 */
+    .s-item .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .s-item .w {
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .s-item .w:hover {
+      color: #7d9dff;
+    }
+
+    .s-item.seen .w {
+      color: #5da97a;
+    }
+
+    /* 漫游过的词 */
+    .s-item .mini {
+      margin-left: auto;
+      flex-shrink: 0;
+      background: none;
+      border: 1px solid #3a3f4e;
+      color: #b48aff;
+      border-radius: 6px;
+      padding: 1px 7px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .s-item .mini:hover {
+      border-color: #b48aff;
+    }
+
+    .s-item .note {
+      font-size: 12px;
+      color: #8a8f9c;
+      margin-top: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ===== 右侧空地:纯文字目录(分类+关键词),点击跳转左栏对应位置 ===== */
+    #toc {
+      width: 180px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 12px;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+      font-size: 17px;
+      color: #8a8f9c;
+    }
+
+    #toc:empty {
+      display: none;
+    }
+
+    /* 没内容时不占位 */
+    .toc-g {
+      margin-bottom: 16px;
+    }
+
+    .toc-t {
+      color: #6a6f7c;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+
+    .toc-t:hover {
+      color: #7d9dff;
+    }
+
+    .toc-w {
+      display: inline-block;
+      margin: 0 9px 5px 0;
+      cursor: pointer;
+      color: #9aa6c0;
+    }
+
+    .toc-w:hover {
+      color: #7d9dff;
+      text-decoration: underline;
+    }
+
+    @media (max-width: 1250px) {
+      #toc {
+        display: none;
+      }
+    }
+
+    /* 窗口窄了藏起来,不挤正文 */
+
+    #center {
+      text-align: center;
+      font-size: 40px;
+      font-weight: 700;
+      color: #f2f3f7;
+      margin: 6px 0 24px;
+      letter-spacing: 2px;
+    }
+
+    #center small {
+      display: block;
+      font-size: 13px;
+      color: #6a6f7c;
+      font-weight: 400;
+      margin-top: 6px;
+    }
+
+    .center-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .deep-btn.lg {
+      font-size: 14px;
+      padding: 4px 14px;
+    }
+
+    .links {
+      font-size: 13px;
+    }
+
+    .links a {
+      color: #5b83d6;
+      text-decoration: none;
+      margin: 0 5px;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+
+    .regen-link {
+      color: #5b83d6;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 6px;
+    }
+
+    .regen-link:hover {
+      text-decoration: underline;
+    }
+
+    #center .detail-box {
+      max-width: 760px;
+      margin: 14px auto 0;
+      text-align: left;
+      background: #1c1f28;
+      border: 1px solid #2a2e3a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #c8cbd4;
+      white-space: pre-wrap;
+    }
+
+    /* 详情归属标签:共用详情框里标明这段解释是谁的 */
+    #center .detail-box .d-owner {
+      color: #7d9dff;
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .think-box {
+      font-size: 12px;
+      color: #9aa0ad;
+      line-height: 1.8;
+      font-family: Consolas, "Microsoft YaHei", monospace;
+    }
+
+    /* 🧭漫游结果折叠框:三组词表并排的小卡片 */
+    .r-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      text-align: left;
+    }
+
+    .r-grid h4 {
+      font-size: 12px;
+      color: #6a6f7c;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .r-item {
+      border: 1px solid #2a2e3a;
+      border-radius: 8px;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+    }
+
+    .r-item .rrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .r-item .rw {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .r-item .rw:hover {
+      color: #7d9dff;
+    }
+
+    .r-item.seen .rw {
+      color: #5da97a;
+    }
+
+    .r-item .rb {
+      margin-left: auto;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: #5b83d6;
+      text-decoration: none;
+    }
+
+    .r-item .rb:hover {
+      text-decoration: underline;
+      color: #7d9dff;
+    }
+
+    .r-item .note {
+      font-size: 11px;
+      color: #8a8f9c;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 900px) {
+      .r-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    #history {
+      max-width: 1600px;
+      margin: 30px auto 0;
+    }
+
+    #history h3 {
+      font-size: 13px;
+      color: #6a6f7c;
+      margin-bottom: 8px;
+    }
+
+    #chips-wrap {
+      overflow: hidden;
+    }
+
+    #chips-wrap.collapsed {
+      max-height: 78px;
+    }
+
+    /* 默认只露出两行 */
+    #chips-toggle {
+      color: #5b83d6;
+      cursor: pointer;
+      font-size: 13px;
+      user-select: none;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    #chips-toggle:hover {
+      text-decoration: underline;
+    }
+
+    .chip {
+      display: inline-block;
+      background: #1c1f28;
+      border: 1px solid #2a2e3a;
+      border-radius: 999px;
+      padding: 4px 12px;
+      margin: 0 6px 6px 0;
+      font-size: 13px;
+      color: #8a8f9c;
+      cursor: pointer;
+    }
+
+    .chip:hover {
+      color: #7d9dff;
+      border-color: #4a7dff;
+    }
+
+    .ftab.active {
+      border-color: #4a7dff;
+      color: #7d9dff;
+      background: #1a2233;
+    }
+
+    /* 划词快问浮层 */
+    #sel-menu {
+      position: absolute;
+      z-index: 100;
+      max-width: 400px;
+      background: #232734;
+      border: 1px solid #4a7dff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .5);
+    }
+
+    #sel-menu .sel-term {
+      font-weight: 700;
+      color: #f2f3f7;
+      margin-bottom: 8px;
+    }
+
+    #sel-menu .sel-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    #sel-menu input {
+      width: 100%;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    #sel-menu .ans {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #c8cbd4;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+
+    #sel-menu .sel-close {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      cursor: pointer;
+      color: #6a6f7c;
+      font-size: 12px;
+    }
+  </style>
 </head>
+
 <body>
   <header>
     <input id="word-input" placeholder="输入一个词,开始漫游…">
@@ -146,19 +491,23 @@
 
   <div id="layout">
     <aside id="sidebar"></aside>
-    <main id="main"><div id="center"></div></main>
+    <main id="main">
+      <div id="center"></div>
+    </main>
     <aside id="toc"></aside>
   </div>
 
   <div id="history">
-    <h3>足迹(自动保存,重启不丢;点词按当前页模式打开——漫游页点=漫游,深挖页点=深挖)</h3>
+    <h3>足迹(自动保存,重启不丢;点词优先吃缓存——有什么数据就开什么:筛选分类下点=按分类跳,全部页按 深挖&gt;漫游&gt;详情,没有数据的才按当前页模式生成)</h3>
     <div style="margin-bottom:8px">
       <span class="chip ftab active" data-f="all" onclick="setFilter('all')">全部</span>
       <span class="chip ftab" data-f="roam" onclick="setFilter('roam')">🧭 漫游图</span>
       <span class="chip ftab" data-f="deep" onclick="setFilter('deep')">🔍 深挖过</span>
       <span class="chip ftab" data-f="detail" onclick="setFilter('detail')">📖 读过详情</span>
     </div>
-    <div id="chips-wrap" class="collapsed"><div id="chips"></div></div>
+    <div id="chips-wrap" class="collapsed">
+      <div id="chips"></div>
+    </div>
     <span id="chips-toggle" onclick="toggleChips()" hidden>展开全部 ▾</span>
   </div>
 
@@ -173,171 +522,186 @@
     <div class="ans" id="sel-ans"></div>
   </div>
 
-<script>
-const visited = new Map();   // word -> {feats:[roam/deep/detail], time}
-let currentWord = "";   // 当前中心词,追问时作为上下文
-let currentViewMode = "basic";   // 当前页面模式:点关键词时继承它(漫游页点=漫游,深挖页点=深挖)
+  <script>
+    const visited = new Map();   // word -> {feats:[roam/deep/detail], time}
+    let currentWord = "";   // 当前中心词,追问时作为上下文
+    let currentViewMode = "basic";   // 当前页面模式:点关键词时继承它(漫游页点=漫游,深挖页点=深挖)
 
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g,
-    c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-function links(w) {
-  const e = encodeURIComponent(w);
-  return `<span class="links">
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g,
+        c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+    function links(w) {
+      const e = encodeURIComponent(w);
+      return `<span class="links">
     <a href="https://search.bilibili.com/all?keyword=${e}" target="_blank">B站</a>
     <a href="https://baike.baidu.com/search?word=${e}" target="_blank">百科</a>
     <a href="https://weixin.sogou.com/weixin?type=2&query=${e}" target="_blank">公众号</a>
   </span>`;
-}
+    }
 
-/* ===== 左栏:按分类分组的词列表,点词=跟随当前模式,📖=右栏看它的详情 ===== */
-function sideItem(it, id) {
-  const seen = visited.has(it.word) ? " seen" : "";
-  const w = esc(it.word).replace(/'/g, "\\'");
-  return `<div class="s-item${seen}" id="${id}" data-word="${esc(it.word)}">
+    /* ===== 左栏:按分类分组的词列表,点词=跟随当前模式,📖=右栏看它的详情 ===== */
+    function sideItem(it, id) {
+      const seen = visited.has(it.word) ? " seen" : "";
+      const w = esc(it.word).replace(/'/g, "\\'");
+      return `<div class="s-item${seen}" id="${id}" data-word="${esc(it.word)}">
     <div class="row">
       <span class="w" onclick="goWord('${w}')" title="${esc(it.note)}">${esc(it.word)}</span>
       <button class="mini" onclick="sideDetail('${w}')" title="在右栏看这个词的详情">📖</button>
     </div>
     <div class="note">${esc(it.note)}</div>
   </div>`;
-}
-
-/* 渲染所有分组:左栏出词条卡片,右栏出纯文字目录(点击跳到左栏对应位置) */
-function renderGroups(groups) {
-  const base = "v";   // 每个词条的锚点 id,目录跳转用
-  let side = "", toc = "";
-  groups.forEach((g, gi) => {
-    const pre = base + gi + "-";
-    side += `<div class="s-group" id="${pre}h"><h3>${esc(g.title)}</h3>` +
-      (g.items ?? []).map((it, i) => sideItem(it, pre + i)).join("") + `</div>`;
-    toc += `<div class="toc-g"><div class="toc-t" onclick="jumpTo('${pre}h')">${esc(g.title)}</div>` +
-      (g.items ?? []).map((it, i) =>
-        `<span class="toc-w" onclick="jumpTo('${pre}${i}')" title="${esc(it.note)}">${esc(it.word)}</span>`
-      ).join("") + `</div>`;
-  });
-  document.getElementById("sidebar").innerHTML = side;
-  document.getElementById("toc").innerHTML = toc;
-}
-
-/* 目录跳转:左栏滚到对应词条,词条高亮闪一下(组标题只滚动不闪) */
-function jumpTo(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  if (el.classList.contains("s-item")) {
-    el.classList.add("flash");
-    setTimeout(() => el.classList.remove("flash"), 1500);
-  }
-}
-
-/* 足迹变化后同步左栏的"去过"变色,不重建列表(避免滚动位置跳动) */
-function refreshSeen() {
-  document.querySelectorAll(".s-item").forEach(el => {
-    el.classList.toggle("seen", visited.has(el.dataset.word));
-  });
-}
-
-/* ===== 右栏:中心词 + 动作按钮 + 共用的详情/思考框 ===== */
-
-function renderDetailInto(box, word, data) {
-  // 模型可能推断出输入实际指向的名称(如句子→领英中国),顺带展示;末尾挂🔄重写入口
-  const named = data.word && data.word !== word ? `【${esc(data.word)}】` : "";
-  const w = esc(word).replace(/'/g, "\\'");
-  box.innerHTML = named + esc(data.detail) +
-    ` <a class="regen-link" onclick="showDetail('${w}', true)">🔄重写</a>`;
-  box.dataset.loaded = "1";
-}
-
-async function fetchDetail(word, force) {
-  const flavor = document.getElementById("flavor-input").value;
-  // 把侧栏词条的注释带上,句式输入推断指向时需要上下文
-  const el = document.querySelector(`.s-item[data-word="${CSS.escape(word)}"]`);
-  const ctx = el
-    ? `${word}(${el.querySelector(".note")?.textContent ?? ""})`
-    : (currentWord ? `关于「${currentWord}」的介绍` : "");
-  const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&mode=detail&flavor=${encodeURIComponent(flavor)}${force ? "&force=1" : ""}&ctx=${encodeURIComponent(ctx)}`);
-  const body = await resp.json();
-  if (!resp.ok) throw new Error(body.error || body.statusText);
-  return body.data;
-}
-
-/* 右栏的详情框是所有词共用的:detailOwner 记着当前展示谁,换词就重新生成 */
-async function showDetail(word, force) {
-  const box = document.getElementById("center-detail");
-  box.hidden = false;
-  if (!force && box.dataset.loaded === "1" && box.dataset.owner === word) return;
-  box.dataset.owner = word;
-  box.textContent = force ? "重写中…(换一次骰子)" : "生成详情中…";
-  try {
-    renderDetailInto(box, word, await fetchDetail(word, force));
-  } catch (err) {
-    // 详情偶发解析失败(句式输入尤其),自动降级为追问式解释,保证有答案
-    try {
-      const q = `解释这个说法(它出自关于「${currentWord}」的介绍):「${word}」`;
-      const resp2 = await fetch(`/api/ask?word=${encodeURIComponent(currentWord)}&q=${encodeURIComponent(q)}`);
-      const body2 = await resp2.json();
-      if (!resp2.ok) throw new Error(body2.error || body2.statusText);
-      box.textContent = body2.data.answer + "\n(降级为追问式解释)";
-      box.dataset.loaded = "1";
-    } catch (err2) {
-      box.textContent = "出错:" + (err2.message || err.message);
     }
-  }
-}
-/* 中心词的📖详情:开着且是同一个词 → 收起;否则加载 */
-function toggleDetail(word) {
-  const box = document.getElementById("center-detail");
-  if (!box.hidden && box.dataset.owner === word) { box.hidden = true; return; }
-  showDetail(word, false);
-}
-/* 侧栏词条的📖:右栏详情框展示该词,并滚到可见处 */
-function sideDetail(word) {
-  showDetail(word, false);
-  document.getElementById("center-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
 
-async function roam(word) { await go(word, "basic"); }
-async function roamDeep(word) { await go(word, "deep"); }
-/* 按当前页面模式打开一个词:深挖页里点击=深挖,漫游页里点击=漫游 */
-function goWord(word) { go(word, currentViewMode); }
+    /* 渲染所有分组:左栏出词条卡片,右栏出纯文字目录(点击跳到左栏对应位置) */
+    function renderGroups(groups) {
+      const base = "v";   // 每个词条的锚点 id,目录跳转用
+      let side = "", toc = "";
+      groups.forEach((g, gi) => {
+        const pre = base + gi + "-";
+        side += `<div class="s-group" id="${pre}h"><h3>${esc(g.title)}</h3>` +
+          (g.items ?? []).map((it, i) => sideItem(it, pre + i)).join("") + `</div>`;
+        toc += `<div class="toc-g"><div class="toc-t" onclick="jumpTo('${pre}h')">${esc(g.title)}</div>` +
+          (g.items ?? []).map((it, i) =>
+            `<span class="toc-w" onclick="jumpTo('${pre}${i}')" title="${esc(it.note)}">${esc(it.word)}</span>`
+          ).join("") + `</div>`;
+      });
+      document.getElementById("sidebar").innerHTML = side;
+      document.getElementById("toc").innerHTML = toc;
+    }
 
-async function go(word, mode) {
-  word = (word || "").trim();
-  if (!word) return;
-  currentWord = word;
-  document.getElementById("word-input").value = word;
-  const status = document.getElementById("status");
-  status.textContent = mode === "deep" ? "深挖中…(思维链模型,多等几秒)" : "问 AI 中…";
-  status.className = "";
+    /* 目录跳转:左栏滚到对应词条,词条高亮闪一下(组标题只滚动不闪) */
+    function jumpTo(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (el.classList.contains("s-item")) {
+        el.classList.add("flash");
+        setTimeout(() => el.classList.remove("flash"), 1500);
+      }
+    }
 
-  try {
-    const flavor = document.getElementById("flavor-input").value;
-    const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&flavor=${encodeURIComponent(flavor)}&mode=${mode}`);
-    const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || body.statusText);
+    /* 足迹变化后同步左栏的"去过"变色,不重建列表(避免滚动位置跳动) */
+    function refreshSeen() {
+      document.querySelectorAll(".s-item").forEach(el => {
+        el.classList.toggle("seen", visited.has(el.dataset.word));
+      });
+    }
 
-    const d = body.data;
-    // 更新足迹:叠加功能标记,挪到最新位置
-    const feats = new Set(visited.get(word)?.feats ?? []);
-    feats.add(mode === "basic" ? "roam" : mode);
-    visited.set(word, { feats: [...feats], time: Date.now() / 1000 });
-    if (mode === "basic") renderBasic(d, body.cached);
-    else renderDeep(d, body.cached);
-    renderChips();
-    refreshSeen();
-    status.textContent = "";
-  } catch (err) {
-    status.textContent = "出错:" + err.message;
-    status.className = "error";
-  }
-}
+    /* ===== 右栏:中心词 + 动作按钮 + 共用的详情/思考框 ===== */
 
-function renderCenter(word, tag) {
-  const w = esc(word).replace(/'/g, "\\'");
-  document.getElementById("center").innerHTML =
-    `${esc(word)}
+    function renderDetailInto(box, word, data) {
+      // 右栏详情框是所有词共用的,开头必须标明这段解释是谁的(中心词自己的不标,免得跟大标题重复);
+      // 模型可能推断出输入实际指向的名称(如句子→领英中国),一并展示;末尾挂🔄重写入口
+      const named = data.word && data.word !== word ? ` → ${esc(data.word)}` : "";
+      const w = esc(word).replace(/'/g, "\\'");
+      const owner = word !== currentWord || named ? `<div class="d-owner">📖 ${esc(word)}${named}</div>` : "";
+      box.innerHTML = owner + esc(data.detail) +
+        ` <a class="regen-link" onclick="showDetail('${w}', true)">🔄重写</a>`;
+      box.dataset.loaded = "1";
+    }
+
+    async function fetchDetail(word, force) {
+      const flavor = document.getElementById("flavor-input").value;
+      // 把侧栏词条的注释带上,句式输入推断指向时需要上下文
+      const el = document.querySelector(`.s-item[data-word="${CSS.escape(word)}"]`);
+      const ctx = el
+        ? `${word}(${el.querySelector(".note")?.textContent ?? ""})`
+        : (currentWord ? `关于「${currentWord}」的介绍` : "");
+      const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&mode=detail&flavor=${encodeURIComponent(flavor)}${force ? "&force=1" : ""}&ctx=${encodeURIComponent(ctx)}`);
+      const body = await resp.json();
+      if (!resp.ok) throw new Error(body.error || body.statusText);
+      return body.data;
+    }
+
+    /* 右栏的详情框是所有词共用的:detailOwner 记着当前展示谁,换词就重新生成 */
+    async function showDetail(word, force) {
+      const box = document.getElementById("center-detail");
+      box.hidden = false;
+      if (!force && box.dataset.loaded === "1" && box.dataset.owner === word) return;
+      box.dataset.owner = word;
+      box.textContent = force ? `「${word}」重写中…(换一次骰子)` : `查「${word}」的详情中…`;
+      try {
+        renderDetailInto(box, word, await fetchDetail(word, force));
+      } catch (err) {
+        // 详情偶发解析失败(句式输入尤其),自动降级为追问式解释,保证有答案
+        try {
+          const q = `解释这个说法(它出自关于「${currentWord}」的介绍):「${word}」`;
+          const resp2 = await fetch(`/api/ask?word=${encodeURIComponent(currentWord)}&q=${encodeURIComponent(q)}`);
+          const body2 = await resp2.json();
+          if (!resp2.ok) throw new Error(body2.error || body2.statusText);
+          box.textContent = `【${word}】` + body2.data.answer + "\n(降级为追问式解释)";
+          box.dataset.loaded = "1";
+        } catch (err2) {
+          box.textContent = "出错:" + (err2.message || err.message);
+        }
+      }
+    }
+    /* 中心词的📖详情:开着且是同一个词 → 收起;否则加载 */
+    function toggleDetail(word) {
+      const box = document.getElementById("center-detail");
+      if (!box.hidden && box.dataset.owner === word) { box.hidden = true; return; }
+      showDetail(word, false);
+    }
+    /* 侧栏词条的📖:右栏详情框展示该词,并滚到可见处 */
+    function sideDetail(word) {
+      showDetail(word, false);
+      document.getElementById("center-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    async function roam(word) { await go(word, "basic"); }
+    async function roamDeep(word) { await go(word, "deep"); }
+    /* 按当前页面模式打开一个词:深挖页里点击=深挖,漫游页里点击=漫游 */
+    function goWord(word) { go(word, currentViewMode); }
+
+    /* 足迹点击:优先吃缓存——词有什么数据就开什么(分类筛选激活且词有对应数据时按分类跳,
+       否则按 深挖>漫游>详情 的富度优先),什么都没有才按当前页面模式去生成 */
+    function goCached(word) {
+      const feats = visited.get(word)?.feats ?? [];
+      const f = historyFilter !== "all" && feats.includes(historyFilter) ? historyFilter
+        : feats.includes("deep") ? "deep"
+        : feats.includes("roam") ? "roam"
+        : feats.includes("detail") ? "detail" : "";
+      if (f === "detail") { showDetail(word, false); return; }   // 详情不换页,右栏直接出解释
+      if (f) { go(word, f === "roam" ? "basic" : f); return; }
+      goWord(word);
+    }
+
+    async function go(word, mode) {
+      word = (word || "").trim();
+      if (!word) return;
+      currentWord = word;
+      document.getElementById("word-input").value = word;
+      const status = document.getElementById("status");
+      status.textContent = mode === "deep" ? "深挖中…(思维链模型,多等几秒)" : "问 AI 中…";
+      status.className = "";
+
+      try {
+        const flavor = document.getElementById("flavor-input").value;
+        const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&flavor=${encodeURIComponent(flavor)}&mode=${mode}`);
+        const body = await resp.json();
+        if (!resp.ok) throw new Error(body.error || body.statusText);
+
+        const d = body.data;
+        // 更新足迹:叠加功能标记,挪到最新位置
+        const feats = new Set(visited.get(word)?.feats ?? []);
+        feats.add(mode === "basic" ? "roam" : mode);
+        visited.set(word, { feats: [...feats], time: Date.now() / 1000 });
+        if (mode === "basic") renderBasic(d, body.cached);
+        else renderDeep(d, body.cached);
+        renderChips();
+        refreshSeen();
+        status.textContent = "";
+      } catch (err) {
+        status.textContent = "出错:" + err.message;
+        status.className = "error";
+      }
+    }
+
+    function renderCenter(word, tag) {
+      const w = esc(word).replace(/'/g, "\\'");
+      document.getElementById("center").innerHTML =
+        `${esc(word)}
      <small>${tag}<br>${links(word)}</small>
      <div class="center-actions">
        <button class="deep-btn lg" onclick="roamDeep('${w}')">🔍深挖</button>
@@ -347,221 +711,222 @@ function renderCenter(word, tag) {
      <div class="detail-box" id="center-detail" hidden></div>
      <div class="detail-box think-box" id="center-think" hidden></div>
      <div class="detail-box" id="center-roamdata" hidden></div>`;
-}
+    }
 
-/* 普通漫游:左栏固定三组 */
-function renderBasic(d, cached) {
-  currentViewMode = "basic";
-  currentThinking = "";
-  renderCenter(d.word, (cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆"));
-  renderGroups([
-    { title: "⬆ 上级分类", items: d.parents },
-    { title: "⬇ 下级分类", items: d.children },
-    { title: "↔ 相邻词(点词继续漫游)", items: d.similar },
-  ]);
-}
+    /* 普通漫游:左栏固定三组 */
+    function renderBasic(d, cached) {
+      currentViewMode = "basic";
+      currentThinking = "";
+      renderCenter(d.word, (cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆"));
+      renderGroups([
+        { title: "⬆ 上级分类", items: d.parents },
+        { title: "⬇ 下级分类", items: d.children },
+        { title: "↔ 相邻词(点词继续漫游)", items: d.similar },
+      ]);
+    }
 
-/* 深挖:按类型动态生成的维度进左栏,🧠思考过程在右栏 */
-let currentThinking = "";
+    /* 深挖:按类型动态生成的维度进左栏,🧠思考过程在右栏 */
+    let currentThinking = "";
 
-function renderDeep(d, cached) {
-  currentViewMode = "deep";
-  currentThinking = d.thinking || "";
-  const tag = `[${esc(d.type ?? "?")}] ${esc(d.summary ?? "")}${cached ? " · ✓缓存" : " · ✨"}`;
-  renderCenter(d.word, tag);
-  if (currentThinking) {
-    document.querySelector("#center .center-actions").innerHTML +=
-      `<button class="deep-btn lg" onclick="toggleThinking()">🧠思考过程</button>`;
-  }
-  renderGroups(
-    (d.dimensions ?? []).map(dim => ({ title: "◈ " + (dim.name ?? ""), items: dim.items }))
-  );
-}
+    function renderDeep(d, cached) {
+      currentViewMode = "deep";
+      currentThinking = d.thinking || "";
+      const tag = `[${esc(d.type ?? "?")}] ${esc(d.summary ?? "")}${cached ? " · ✓缓存" : " · ✨"}`;
+      renderCenter(d.word, tag);
+      if (currentThinking) {
+        document.querySelector("#center .center-actions").innerHTML +=
+          `<button class="deep-btn lg" onclick="toggleThinking()">🧠思考过程</button>`;
+      }
+      renderGroups(
+        (d.dimensions ?? []).map(dim => ({ title: "◈ " + (dim.name ?? ""), items: dim.items }))
+      );
+    }
 
-function toggleThinking() {
-  const box = document.getElementById("center-think");
-  if (!box) return;
-  if (!box.hidden) { box.hidden = true; return; }
-  box.textContent = currentThinking || "(本次没有记录到思考过程)";
-  box.hidden = false;
-}
+    function toggleThinking() {
+      const box = document.getElementById("center-think");
+      if (!box) return;
+      if (!box.hidden) { box.hidden = true; return; }
+      box.textContent = currentThinking || "(本次没有记录到思考过程)";
+      box.hidden = false;
+    }
 
-/* 🧭漫游结果:读这个词已有的漫游数据(上级/下级/相邻词),折叠显示在正下方。
-   纯复用——cache_only 模式只查缓存不生成;没漫游过就明说,不花一次钱。
-   词可点击,跟随当前页面模式跳转 */
-const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得重复请求)
+    /* 🧭漫游结果:读这个词已有的漫游数据(上级/下级/相邻词),折叠显示在正下方。
+       纯复用——cache_only 模式只查缓存不生成;没漫游过就明说,不花一次钱。
+       词可点击,跟随当前页面模式跳转 */
+    const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得重复请求)
 
-async function roamData() {
-  const box = document.getElementById("center-roamdata");
-  if (!box) return;
-  if (!box.hidden) { box.hidden = true; return; }   // 开着 → 收起
-  box.hidden = false;
-  const mem = roamDataMem.get(currentWord);
-  if (mem) { renderRoamData(box, mem); return; }    // 每次展开都重画,足迹变色保持新鲜
-  box.textContent = "读漫游缓存…";
-  try {
-    const flavor = document.getElementById("flavor-input").value;
-    const resp = await fetch(`/api/expand?word=${encodeURIComponent(currentWord)}&flavor=${encodeURIComponent(flavor)}&mode=basic&cache_only=1`);
-    const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || "还没漫游过这个词");
-    roamDataMem.set(currentWord, body.data);
-    renderRoamData(box, body.data);
-  } catch (err) {
-    box.textContent = "(还没有可复用的漫游结果:" + (err.message || "没漫游过") + ")";
-  }
-}
+    async function roamData() {
+      const box = document.getElementById("center-roamdata");
+      if (!box) return;
+      if (!box.hidden) { box.hidden = true; return; }   // 开着 → 收起
+      box.hidden = false;
+      const mem = roamDataMem.get(currentWord);
+      if (mem) { renderRoamData(box, mem); return; }    // 每次展开都重画,足迹变色保持新鲜
+      box.textContent = "读漫游缓存…";
+      try {
+        const flavor = document.getElementById("flavor-input").value;
+        const resp = await fetch(`/api/expand?word=${encodeURIComponent(currentWord)}&flavor=${encodeURIComponent(flavor)}&mode=basic&cache_only=1`);
+        const body = await resp.json();
+        if (!resp.ok) throw new Error(body.error || "还没漫游过这个词");
+        roamDataMem.set(currentWord, body.data);
+        renderRoamData(box, body.data);
+      } catch (err) {
+        box.textContent = "(还没有可复用的漫游结果:" + (err.message || "没漫游过") + ")";
+      }
+    }
 
-function renderRoamData(box, d) {
-  const mini = it => {
-    const seen = visited.has(it.word) ? " seen" : "";
-    const w = esc(it.word).replace(/'/g, "\\'");
-    return `<div class="r-item${seen}">
+    function renderRoamData(box, d) {
+      const mini = it => {
+        const seen = visited.has(it.word) ? " seen" : "";
+        const w = esc(it.word).replace(/'/g, "\\'");
+        return `<div class="r-item${seen}">
       <div class="rrow">
         <span class="rw" onclick="goWord('${w}')">${esc(it.word)}</span>
         <a class="rb" href="https://search.bilibili.com/all?keyword=${encodeURIComponent(it.word)}" target="_blank" title="去B站搜这个词">B站▶</a>
       </div>
       <div class="note">${esc(it.note)}</div>
     </div>`;
-  };
-  box.innerHTML = `<div class="r-grid">
+      };
+      box.innerHTML = `<div class="r-grid">
     <div><h4>⬆ 上级分类</h4>${(d.parents ?? []).map(mini).join("")}</div>
     <div><h4>⬇ 下级分类</h4>${(d.children ?? []).map(mini).join("")}</div>
     <div><h4>↔ 相邻词</h4>${(d.similar ?? []).map(mini).join("")}</div>
   </div>`;
-}
+    }
 
-let chipsExpanded = false;   // 足迹默认折叠到两行
+    let chipsExpanded = false;   // 足迹默认折叠到两行
 
-function renderChips() {
-  const icons = { roam: "🧭", deep: "🔍", detail: "📖" };
-  let words = [...visited.entries()].sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
-  if (historyFilter !== "all") {
-    words = words.filter(([, v]) => (v.feats ?? []).includes(historyFilter));
-  }
-  document.getElementById("chips").innerHTML = words.map(([w, v]) =>
-    `<span class="chip" onclick="goWord('${esc(w).replace(/'/g, "\\'")}')">${(v.feats ?? []).map(f => icons[f] ?? "").join("")} ${esc(w)}</span>`
-  ).join("") || `<span style="color:#6a6f7c;font-size:13px">(这一类还没有足迹)</span>`;
+    function renderChips() {
+      const icons = { roam: "🧭", deep: "🔍", detail: "📖" };
+      let words = [...visited.entries()].sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
+      if (historyFilter !== "all") {
+        words = words.filter(([, v]) => (v.feats ?? []).includes(historyFilter));
+      }
+      document.getElementById("chips").innerHTML = words.map(([w, v]) =>
+        `<span class="chip" onclick="goCached('${esc(w).replace(/'/g, "\\'")}')">${(v.feats ?? []).map(f => icons[f] ?? "").join("")} ${esc(w)}</span>`
+      ).join("") || `<span style="color:#6a6f7c;font-size:13px">(这一类还没有足迹)</span>`;
 
-  const wrap = document.getElementById("chips-wrap");
-  const tg = document.getElementById("chips-toggle");
-  wrap.classList.toggle("collapsed", !chipsExpanded);
-  tg.textContent = chipsExpanded ? "收起 ▴" : "展开全部 ▾";
-  // 折叠状态下若内容不足两行,隐藏切换按钮
-  requestAnimationFrame(() => {
-    tg.hidden = !chipsExpanded && wrap.scrollHeight <= wrap.clientHeight + 4;
-  });
-}
+      const wrap = document.getElementById("chips-wrap");
+      const tg = document.getElementById("chips-toggle");
+      wrap.classList.toggle("collapsed", !chipsExpanded);
+      tg.textContent = chipsExpanded ? "收起 ▴" : "展开全部 ▾";
+      // 折叠状态下若内容不足两行,隐藏切换按钮
+      requestAnimationFrame(() => {
+        tg.hidden = !chipsExpanded && wrap.scrollHeight <= wrap.clientHeight + 4;
+      });
+    }
 
-function toggleChips() {
-  chipsExpanded = !chipsExpanded;
-  renderChips();
-}
+    function toggleChips() {
+      chipsExpanded = !chipsExpanded;
+      renderChips();
+    }
 
-let historyFilter = "all";
-function setFilter(f) {
-  historyFilter = f;
-  document.querySelectorAll(".ftab").forEach(t => t.classList.toggle("active", t.dataset.f === f));
-  renderChips();
-}
+    let historyFilter = "all";
+    function setFilter(f) {
+      historyFilter = f;
+      document.querySelectorAll(".ftab").forEach(t => t.classList.toggle("active", t.dataset.f === f));
+      renderChips();
+    }
 
-function roamFromInput() {
-  roam(document.getElementById("word-input").value);
-}
+    function roamFromInput() {
+      roam(document.getElementById("word-input").value);
+    }
 
-/* ===== 划词快问:在详情文字里选中词,弹出迷你菜单 ===== */
-const selMenu = document.getElementById("sel-menu");
-let selTerm = "";
-let selContext = "";
+    /* ===== 划词快问:在详情文字里选中词,弹出迷你菜单 ===== */
+    const selMenu = document.getElementById("sel-menu");
+    let selTerm = "";
+    let selContext = "";
 
-document.addEventListener("mouseup", e => {
-  if (selMenu.contains(e.target)) return;   // 菜单内部点击不处理
-  setTimeout(() => {
-    const sel = window.getSelection();
-    const text = sel ? String(sel).trim() : "";
-    const box = sel?.anchorNode?.parentElement?.closest(".detail-box");
-    if (!box || sel.isCollapsed || text.length < 2 || text.length > 30) {
+    document.addEventListener("mouseup", e => {
+      if (selMenu.contains(e.target)) return;   // 菜单内部点击不处理
+      setTimeout(() => {
+        const sel = window.getSelection();
+        const text = sel ? String(sel).trim() : "";
+        const box = sel?.anchorNode?.parentElement?.closest(".detail-box");
+        if (!box || sel.isCollapsed || text.length < 2 || text.length > 30) {
+          selMenu.hidden = true;
+          return;
+        }
+        selTerm = text;
+        selContext = box.textContent.trim().slice(0, 500);   // 详情原文当追问上下文
+        document.getElementById("sel-term").textContent = `「${text}」`;
+        document.getElementById("sel-ans").textContent = "";
+        document.getElementById("sel-input").hidden = true;
+        document.getElementById("sel-actions").hidden = false;
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        selMenu.style.top = rect.bottom + window.scrollY + 8 + "px";
+        selMenu.style.left = Math.max(8, rect.left + window.scrollX) + "px";
+        selMenu.hidden = false;
+      }, 0);
+    });
+
+    function hideSel() {
       selMenu.hidden = true;
-      return;
+      window.getSelection()?.removeAllRanges();
     }
-    selTerm = text;
-    selContext = box.textContent.trim().slice(0, 500);   // 详情原文当追问上下文
-    document.getElementById("sel-term").textContent = `「${text}」`;
-    document.getElementById("sel-ans").textContent = "";
-    document.getElementById("sel-input").hidden = true;
-    document.getElementById("sel-actions").hidden = false;
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
-    selMenu.style.top = rect.bottom + window.scrollY + 8 + "px";
-    selMenu.style.left = Math.max(8, rect.left + window.scrollX) + "px";
-    selMenu.hidden = false;
-  }, 0);
-});
 
-function hideSel() {
-  selMenu.hidden = true;
-  window.getSelection()?.removeAllRanges();
-}
-
-/* "是什么?"——选中的词直接走现成的详情模式,零新增后端 */
-async function askWhat() {
-  const ans = document.getElementById("sel-ans");
-  ans.textContent = "查询中…";
-  document.getElementById("sel-actions").hidden = true;
-  try {
-    const flavor = document.getElementById("flavor-input").value;
-    const resp = await fetch(`/api/expand?word=${encodeURIComponent(selTerm)}&mode=detail&flavor=${encodeURIComponent(flavor)}`);
-    const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || body.statusText);
-    ans.textContent = body.data.detail;
-    const fe = new Set(visited.get(selTerm)?.feats ?? []);
-    fe.add("detail");
-    visited.set(selTerm, { feats: [...fe], time: Date.now() / 1000 });
-    renderChips();
-  } catch (err) {
-    ans.textContent = "出错:" + err.message;
-  }
-}
-
-/* "追问…"——带中心词和详情原文当上下文,走 /api/ask */
-function showAskInput() {
-  document.getElementById("sel-actions").hidden = true;
-  const inp = document.getElementById("sel-input");
-  inp.hidden = false;
-  inp.focus();
-}
-async function sendAsk() {
-  const q = document.getElementById("sel-input").value.trim();
-  if (!q) return;
-  const ans = document.getElementById("sel-ans");
-  ans.textContent = "思考中…";
-  try {
-    const resp = await fetch(`/api/ask?word=${encodeURIComponent(currentWord)}&q=${encodeURIComponent(q)}&ctx=${encodeURIComponent(selContext)}`);
-    const body = await resp.json();
-    if (!resp.ok) throw new Error(body.error || body.statusText);
-    ans.textContent = body.data.answer;
-  } catch (err) {
-    ans.textContent = "出错:" + err.message;
-  }
-}
-
-// 启动时从后端加载历史足迹(存在 data/cache.json 里,重启不丢)
-async function loadHistory() {
-  try {
-    const resp = await fetch("/api/cache");
-    const body = await resp.json();
-    for (const it of body.words) {
-      visited.set(it.word, { feats: it.feats ?? [], time: it.time ?? 0 });
+    /* "是什么?"——选中的词直接走现成的详情模式,零新增后端 */
+    async function askWhat() {
+      const ans = document.getElementById("sel-ans");
+      ans.textContent = "查询中…";
+      document.getElementById("sel-actions").hidden = true;
+      try {
+        const flavor = document.getElementById("flavor-input").value;
+        const resp = await fetch(`/api/expand?word=${encodeURIComponent(selTerm)}&mode=detail&flavor=${encodeURIComponent(flavor)}`);
+        const body = await resp.json();
+        if (!resp.ok) throw new Error(body.error || body.statusText);
+        ans.textContent = body.data.detail;
+        const fe = new Set(visited.get(selTerm)?.feats ?? []);
+        fe.add("detail");
+        visited.set(selTerm, { feats: [...fe], time: Date.now() / 1000 });
+        renderChips();
+      } catch (err) {
+        ans.textContent = "出错:" + err.message;
+      }
     }
-    renderChips();
-  } catch (err) { /* 加载失败就当没有历史,不影响使用 */ }
-}
-loadHistory();
 
-document.getElementById("word-input").addEventListener("keydown", e => {
-  if (e.key === "Enter") roamFromInput();
-});
-document.getElementById("sel-input").addEventListener("keydown", e => {
-  if (e.key === "Enter") sendAsk();
-});
-</script>
+    /* "追问…"——带中心词和详情原文当上下文,走 /api/ask */
+    function showAskInput() {
+      document.getElementById("sel-actions").hidden = true;
+      const inp = document.getElementById("sel-input");
+      inp.hidden = false;
+      inp.focus();
+    }
+    async function sendAsk() {
+      const q = document.getElementById("sel-input").value.trim();
+      if (!q) return;
+      const ans = document.getElementById("sel-ans");
+      ans.textContent = "思考中…";
+      try {
+        const resp = await fetch(`/api/ask?word=${encodeURIComponent(currentWord)}&q=${encodeURIComponent(q)}&ctx=${encodeURIComponent(selContext)}`);
+        const body = await resp.json();
+        if (!resp.ok) throw new Error(body.error || body.statusText);
+        ans.textContent = body.data.answer;
+      } catch (err) {
+        ans.textContent = "出错:" + err.message;
+      }
+    }
+
+    // 启动时从后端加载历史足迹(存在 data/cache.json 里,重启不丢)
+    async function loadHistory() {
+      try {
+        const resp = await fetch("/api/cache");
+        const body = await resp.json();
+        for (const it of body.words) {
+          visited.set(it.word, { feats: it.feats ?? [], time: it.time ?? 0 });
+        }
+        renderChips();
+      } catch (err) { /* 加载失败就当没有历史,不影响使用 */ }
+    }
+    loadHistory();
+
+    document.getElementById("word-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") roamFromInput();
+    });
+    document.getElementById("sel-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") sendAsk();
+    });
+  </script>
 </body>
+
 </html>

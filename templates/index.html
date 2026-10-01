@@ -378,7 +378,7 @@
 
     #history {
       max-width: 1600px;
-      margin: 30px auto 0;
+      margin: 0 auto 24px;   /* 足迹当书签栏用,顶在头部下方;默认折叠两行不挤阅读区 */
     }
 
     #history h3 {
@@ -424,6 +424,27 @@
     .chip:hover {
       color: #7d9dff;
       border-color: #4a7dff;
+    }
+
+    /* 足迹数据类型色点(代替原先一排 emoji,省一半宽度) */
+    .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+
+    .dot-roam { background: #5da97a; }
+    .dot-deep { background: #b48aff; }
+    .dot-detail { background: #5b83d6; }
+
+    #chip-search {
+      width: 150px;
+      font-size: 13px;
+      padding: 4px 10px;
+      vertical-align: middle;
     }
 
     .ftab.active {
@@ -489,26 +510,30 @@
 
   <div id="status"></div>
 
+  <div id="history">
+    <h3 title="点词优先吃缓存:按词已有数据打开——筛选分类下点=按分类跳,全部页按 深挖>漫游>详情,没有数据的按当前页模式生成。词后的色点:绿=漫游 紫=深挖 蓝=详情">
+      足迹(自动保存,重启不丢)<span id="chip-count"></span></h3>
+    <div style="margin-bottom:8px">
+      <span class="chip ftab active" data-f="all" onclick="setFilter('all')">全部</span>
+      <span class="chip ftab" data-f="roam" onclick="setFilter('roam')">🧭 漫游图</span>
+      <span class="chip ftab" data-f="deep" onclick="setFilter('deep')">🔍 深挖过</span>
+      <span class="chip ftab" data-f="detail" onclick="setFilter('detail')">📖 读过详情</span>
+      <span class="chip ftab stab active" data-s="time" onclick="setSort('time')">最近</span>
+      <span class="chip ftab stab" data-s="name" onclick="setSort('name')">名称</span>
+      <input id="chip-search" placeholder="筛词,即输即筛…">
+    </div>
+    <div id="chips-wrap" class="collapsed">
+      <div id="chips"></div>
+    </div>
+    <span id="chips-toggle" onclick="toggleChips()" hidden>展开全部 ▾</span>
+  </div>
+
   <div id="layout">
     <aside id="sidebar"></aside>
     <main id="main">
       <div id="center"></div>
     </main>
     <aside id="toc"></aside>
-  </div>
-
-  <div id="history">
-    <h3>足迹(自动保存,重启不丢;点词优先吃缓存——有什么数据就开什么:筛选分类下点=按分类跳,全部页按 深挖&gt;漫游&gt;详情,没有数据的才按当前页模式生成)</h3>
-    <div style="margin-bottom:8px">
-      <span class="chip ftab active" data-f="all" onclick="setFilter('all')">全部</span>
-      <span class="chip ftab" data-f="roam" onclick="setFilter('roam')">🧭 漫游图</span>
-      <span class="chip ftab" data-f="deep" onclick="setFilter('deep')">🔍 深挖过</span>
-      <span class="chip ftab" data-f="detail" onclick="setFilter('detail')">📖 读过详情</span>
-    </div>
-    <div id="chips-wrap" class="collapsed">
-      <div id="chips"></div>
-    </div>
-    <span id="chips-toggle" onclick="toggleChips()" hidden>展开全部 ▾</span>
   </div>
 
   <div id="sel-menu" hidden>
@@ -547,6 +572,7 @@
       return `<div class="s-item${seen}" id="${id}" data-word="${esc(it.word)}">
     <div class="row">
       <span class="w" onclick="goWord('${w}')" title="${esc(it.note)}">${esc(it.word)}</span>
+      <button class="mini" onclick="roamDeep('${w}')" title="深挖这个词">🔍</button>
       <button class="mini" onclick="sideDetail('${w}')" title="在右栏看这个词的详情">📖</button>
     </div>
     <div class="note">${esc(it.note)}</div>
@@ -782,6 +808,7 @@
         return `<div class="r-item${seen}">
       <div class="rrow">
         <span class="rw" onclick="goWord('${w}')">${esc(it.word)}</span>
+        <button class="mini" onclick="roamDeep('${w}')" title="深挖这个词">🔍</button>
         <a class="rb" href="https://search.bilibili.com/all?keyword=${encodeURIComponent(it.word)}" target="_blank" title="去B站搜这个词">B站▶</a>
       </div>
       <div class="note">${esc(it.note)}</div>
@@ -797,14 +824,24 @@
     let chipsExpanded = false;   // 足迹默认折叠到两行
 
     function renderChips() {
-      const icons = { roam: "🧭", deep: "🔍", detail: "📖" };
-      let words = [...visited.entries()].sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
+      // 图标瘦成色点 + 即时筛选 + 排序切换:词一多,靠扫是扫不过来的
+      const q = (document.getElementById("chip-search").value || "").trim().toLowerCase();
+      let words = [...visited.entries()];
       if (historyFilter !== "all") {
         words = words.filter(([, v]) => (v.feats ?? []).includes(historyFilter));
       }
+      if (q) {
+        words = words.filter(([w]) => w.toLowerCase().includes(q));
+      }
+      words.sort((a, b) => chipSort === "name"
+        ? a[0].localeCompare(b[0], "zh-Hans-CN")
+        : (b[1].time || 0) - (a[1].time || 0));
+      const dots = feats => ["roam", "deep", "detail"].filter(f => (feats ?? []).includes(f))
+        .map(f => `<i class="dot dot-${f}"></i>`).join("");
       document.getElementById("chips").innerHTML = words.map(([w, v]) =>
-        `<span class="chip" onclick="goCached('${esc(w).replace(/'/g, "\\'")}')">${(v.feats ?? []).map(f => icons[f] ?? "").join("")} ${esc(w)}</span>`
-      ).join("") || `<span style="color:#6a6f7c;font-size:13px">(这一类还没有足迹)</span>`;
+        `<span class="chip" onclick="goCached('${esc(w).replace(/'/g, "\\'")}')">${esc(w)}${dots(v.feats)}</span>`
+      ).join("") || `<span style="color:#6a6f7c;font-size:13px">(没有匹配的足迹)</span>`;
+      document.getElementById("chip-count").textContent = ` · ${words.length} 词`;
 
       const wrap = document.getElementById("chips-wrap");
       const tg = document.getElementById("chips-toggle");
@@ -824,7 +861,14 @@
     let historyFilter = "all";
     function setFilter(f) {
       historyFilter = f;
-      document.querySelectorAll(".ftab").forEach(t => t.classList.toggle("active", t.dataset.f === f));
+      document.querySelectorAll(".ftab:not(.stab)").forEach(t => t.classList.toggle("active", t.dataset.f === f));
+      renderChips();
+    }
+
+    let chipSort = "time";   // 足迹排序:最近(默认,越新越靠前)/名称(稳定,好扫)
+    function setSort(s) {
+      chipSort = s;
+      document.querySelectorAll(".stab").forEach(t => t.classList.toggle("active", t.dataset.s === s));
       renderChips();
     }
 

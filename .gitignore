@@ -1,3 +1,11 @@
 # Python 运行时产物
 __pycache__/
 *.pyc
+
+# 批量推理的中间产物(本机运行时数据:提交文件/结果文件/任务记录)
+data/batch_in/
+data/batch_out/
+data/batch_jobs.json
+
+# 运行时异常日志(诊断用,不是足迹)
+data/abnormal.log

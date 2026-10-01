@@ -9,6 +9,7 @@
 """
 import json
 import os
+import threading
 import time
 from pathlib import Path
 
@@ -107,12 +108,16 @@ LOG_FILE = BASE_DIR / "data" / "abnormal.log"
 END_PUNCT = tuple("。！？…～」』）)】!?\"'")   # 正文/详情正常收尾的标点
 
 
+_LOG_LOCK = threading.Lock()   # Flask 开发服务器默认多线程,在线并发预热也会多线程写,行不能串
+
+
 def log_abnormal(kind: str, who: str, detail: str = "") -> None:
     """异常数据留痕(腰斩的句子/空返回/绕路解析…),写 data/abnormal.log 供事后翻账。"""
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    with LOG_FILE.open("a", encoding="utf-8") as f:
-        f.write(f"[{stamp}] {kind} | {who} | {detail}\n")
+    with _LOG_LOCK:
+        with LOG_FILE.open("a", encoding="utf-8") as f:
+            f.write(f"[{stamp}] {kind} | {who} | {detail}\n")
 
 
 def parse_llm_json(text: str) -> dict:
@@ -195,16 +200,23 @@ def _validate(data: dict, mode: str, word: str, reasoning: str) -> None:
             raise ValueError("详情话说一半,重掷一次")
 
 
-def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ctx: str = "") -> dict:
-    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。
-    ctx:输入所在的介绍片段,句式输入推断指向时用。
-    校验不过(字段缺失/详情腰斩)自动重掷一次——温度高就是掷骰子,重掷通常就好。"""
+def build_prompt(word: str, flavor: str, visited: list[str], mode: str = "basic", ctx: str = "") -> tuple:
+    """拼出一次生成请求的三件套 (system, user, temperature)。
+    在线请求和批量预热共用,保证两条路的提示词一字不差。"""
     visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
     user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
     if ctx:
         user_msg += f"\n它出自的介绍片段:{ctx}"
     system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
     temperature = 0.7 if mode == "detail" else 1.1  # 详情/追问求准,漫游求惊喜
+    return system, user_msg, temperature
+
+
+def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ctx: str = "") -> dict:
+    """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。
+    ctx:输入所在的介绍片段,句式输入推断指向时用。
+    校验不过(字段缺失/详情腰斩)自动重掷一次——温度高就是掷骰子,重掷通常就好。"""
+    system, user_msg, temperature = build_prompt(word, flavor, visited, mode, ctx)
 
     last_err: Exception = ValueError("未执行")
     for _attempt in range(2):
@@ -215,6 +227,29 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ct
         except (AssertionError, ValueError) as e:
             last_err = e
     raise last_err
+
+
+def merge_into_cache(cache: dict, word: str, mode: str, data: dict, flavor: str = "") -> None:
+    """把一次生成结果并进缓存条目:basic 整条写入,深挖/详情嵌进字段,不污染足迹词表。
+    在线路由和批量回填共用,保证两条路的合并语义一致——回填不许冲掉已存的 deep/detail。"""
+    if mode == "basic":
+        data["word"] = word
+        data["flavor"] = flavor
+        data["time"] = int(time.time())
+        entry = cache.get(word)
+        if entry is not None and entry.get("deep"):
+            data["deep"] = entry["deep"]  # 别把已存的深挖结果冲掉
+        if entry is not None and entry.get("detail"):
+            data["detail"] = entry["detail"]  # 详情同理
+        cache[word] = data
+    else:
+        entry = cache.get(word) or {"word": word, "time": int(time.time())}
+        data["word"] = word
+        if mode == "deep":
+            entry["deep"] = data
+        else:
+            entry["detail"] = data["detail"]
+        cache[word] = entry
 
 
 @app.route("/")
@@ -266,26 +301,7 @@ def expand():
         log_abnormal("生成失败(重试耗尽或校验不过)", word, str(e)[:200])
         return jsonify({"error": f"模型返回解析失败:{e}"}), 502
 
-    if mode == "basic":
-        data["word"] = word
-        data["flavor"] = flavor
-        data["time"] = int(time.time())
-        if entry is not None and entry.get("deep"):
-            data["deep"] = entry["deep"]  # 别把已存的深挖结果冲掉
-        if entry is not None and entry.get("detail"):
-            data["detail"] = entry["detail"]  # 详情同理
-        cache[word] = data
-    else:
-        # 深挖/详情嵌在词条字段里,不污染足迹词表
-        entry = cache.get(word) or {"word": word, "time": int(time.time())}
-        data["word"] = word
-        if mode == "deep":
-            entry["deep"] = data
-        else:
-            entry["detail"] = data["detail"]
-
-        cache[word] = entry
-
+    merge_into_cache(cache, word, mode, data, flavor)  # 合并语义与批量回填共用
     save_cache(cache)
     return jsonify({"cached": False, "data": data})
 

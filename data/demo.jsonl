@@ -1,0 +1,2 @@
+{"custom_id": "request-1", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "mimo-v2.6-flash", "messages": [{"role": "user", "content": "Hello"}]}}
+{"custom_id": "request-2", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "mimo-v2.6-pro", "messages": [{"role": "user", "content": "World"}]}}

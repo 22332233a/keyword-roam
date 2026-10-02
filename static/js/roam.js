@@ -89,7 +89,8 @@ async function roam(word) { await go(word, "basic"); }
       renderCenter(d.word, tag);
       if (currentThinking) {
         document.querySelector("#center .center-actions").innerHTML +=
-          `<button class="deep-btn lg" onclick="toggleThinking()">🧠思考过程</button>`;
+          `<button class="deep-btn lg" onclick="toggleThinking()">🧠思考过程</button>` +
+          `<button class="deep-btn lg" onclick="fillFromDeep()" title="批量给这棵树深挖维度里的词生成详情">📚深挖词补详情</button>`;
       }
       renderGroups(
         (d.dimensions ?? []).map(dim => ({ title: "◈ " + (dim.name ?? ""), items: dim.items }))

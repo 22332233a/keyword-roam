@@ -47,7 +47,13 @@
       inp.value = "";
       const hist = chatMem.get(currentWord) ?? [];
       const dbox = document.getElementById("center-detail");
-      const ctx = dbox?.dataset?.owner === currentWord && dbox?.dataset?.raw ? dbox.dataset.raw : "";
+      let ctx = "";
+      if (dbox?.dataset?.raw) {
+        const owner = dbox.dataset.owner || "";
+        ctx = owner && owner !== currentWord
+          ? `（注意:这段原文属于「${owner}」,不是中心词「${currentWord}」的）\n${dbox.dataset.raw}`
+          : dbox.dataset.raw;   // 划词追问常落在别的词的详情卡上,原文带不带归属,模型才不会装看不见
+      }
       renderChat(true);
       let errMsg = "";
       try {

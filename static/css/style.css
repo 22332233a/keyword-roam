@@ -682,13 +682,24 @@
 
   #tree-fill-progress { color: #8a8f9c; font-size: 12px; }
 
-  /* ===== 📝 笔记左栏(常驻工作区) ===== */
+  /* ===== 📝 笔记列(常驻工作区,词卡与主区之间) ===== */
+  #note-col {
+    width: 300px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 12px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+  }
+
+  #note-col.collapsed { display: none; }
+
   #note-title { color: #d8dce6; font-size: 13px; }
 
   #note-input {
     display: block;
     width: 100%;
-    min-height: 140px;
+    min-height: 320px;
     background: #171a22;
     border: 1px solid #2a2e3a;
     border-radius: 6px;

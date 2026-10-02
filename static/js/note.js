@@ -2,11 +2,9 @@
 let noteSaveTimer = null;
 
 function toggleNote() {
-  /* 左栏里词表常驻,📝只折叠笔记区(标题/输入框/状态行) */
-  for (const id of ["note-title", "note-input", "note-status"]) {
-    const el = document.getElementById(id);
-    if (el) el.hidden = !el.hidden;
-  }
+  /* 📝收起/展开整条笔记列 */
+  const col = document.getElementById("note-col");
+  if (col) col.classList.toggle("collapsed");
 }
 
 /* 换词时由 renderCenter 调用:标题跟随,重新拉取该词的笔记 */

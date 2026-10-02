@@ -2,9 +2,12 @@
 let noteSaveTimer = null;
 
 function toggleNote() {
-  /* 📝收起/展开整条笔记列 */
+  /* 📝收起/展开笔记列;目录(右侧文字速查)只在笔记收起时顶上,两者互占右缘空间 */
   const col = document.getElementById("note-col");
-  if (col) col.classList.toggle("collapsed");
+  if (!col) return;
+  const collapsed = col.classList.toggle("collapsed");
+  const toc = document.getElementById("toc");
+  if (toc) toc.hidden = !collapsed;
 }
 
 /* 换词时由 renderCenter 调用:标题跟随,重新拉取该词的笔记 */

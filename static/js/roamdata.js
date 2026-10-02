@@ -4,6 +4,7 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
       const box = document.getElementById("center-roamdata");
       if (!box) return;
       if (!box.hidden) { box.hidden = true; return; }   // 开着 → 收起
+      closeCenterBoxes("center-roamdata");
       box.hidden = false;
       const mem = roamDataMem.get(currentWord);
       if (mem) { renderRoamData(box, mem); return; }    // 每次展开都重画,足迹变色保持新鲜
@@ -36,6 +37,7 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
       };
       box.innerHTML = `<div class="r-toolbar">
       <button id="tree-fill-btn" onclick="fillTreeDetails()" title="给这棵树里所有缺详情的词批量生成 📖 详情">📚 整树补详情</button>
+      <a class="regen-link" onclick="fillTreeDetails(true)" title="只跑深挖维度里的缺详情词">🔍只补深挖词</a>
       <span id="tree-fill-progress" class="map-note" title="跑的时候点这里停止"></span>
     </div>
     <div class="r-grid">
@@ -101,15 +103,6 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
       prog.textContent = treeFillStop
         ? `已停止:完成 ${done}/${todo.length}`
         : `完成 ${done}/${todo.length}` + (failed.length ? ` · 失败:${failed.join("、")}` : " · 全部成功 ✓");
-    }
-
-    /* 深挖页的 📚:首点=开面板只跑深挖维度的词,再点=折叠(后台任务不受影响) */
-    async function fillFromDeep() {
-      const box = document.getElementById("center-roamdata");
-      if (!box) return;
-      if (!box.hidden) { box.hidden = true; return; }
-      await roamData();
-      fillTreeDetails(true);
     }
 
     

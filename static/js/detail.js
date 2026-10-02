@@ -30,6 +30,7 @@
       const box = document.getElementById("center-detail");
       box.hidden = false;
       if (!force && box.dataset.loaded === "1" && box.dataset.owner === word) return;
+      closeCenterBoxes("center-detail");
       box.dataset.owner = word;
       box.textContent = force ? `「${word}」重写中…(换一次骰子)` : `查「${word}」的详情中…`;
       try {

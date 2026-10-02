@@ -60,7 +60,7 @@ async function roam(word) { await go(word, "basic"); }
        <button class="deep-btn lg" onclick="roamData()">🧭漫游结果</button>
        <button class="deep-btn lg" onclick="toggleChat()">💬对话</button>
        <button class="deep-btn lg" onclick="toggleNote()">📝笔记</button>
-       <button class="deep-btn lg" onclick="rerollWord()" title="清掉这个词当前页模式(漫游/深挖)的缓存,花钱重新生成">🎲重掷</button>
+       <button class="deep-btn sm" onclick="rerollWord()" title="重掷:清掉这个词当前页模式(漫游/深挖)的缓存,花钱重新生成">🎲</button>
      </div>
      <div class="detail-box" id="center-detail" hidden></div>
      <div class="detail-box think-box" id="center-think" hidden></div>
@@ -91,8 +91,7 @@ async function roam(word) { await go(word, "basic"); }
       renderCenter(d.word, tag);
       if (currentThinking) {
         document.querySelector("#center .center-actions").innerHTML +=
-          `<button class="deep-btn lg" onclick="toggleThinking()">🧠思考过程</button>` +
-          `<button class="deep-btn lg" onclick="fillFromDeep()" title="批量给这棵树深挖维度里的词生成详情">📚深挖词补详情</button>`;
+          `<button class="deep-btn sm" onclick="toggleThinking()" title="看本次深挖的思维链">🧠</button>`;
       }
       renderGroups(
         (d.dimensions ?? []).map(dim => ({ title: "◈ " + (dim.name ?? ""), items: dim.items }))
@@ -103,6 +102,7 @@ async function roam(word) { await go(word, "basic"); }
       const box = document.getElementById("center-think");
       if (!box) return;
       if (!box.hidden) { box.hidden = true; return; }
+      closeCenterBoxes("center-think");
       box.textContent = currentThinking || "(本次没有记录到思考过程)";
       box.hidden = false;
     }

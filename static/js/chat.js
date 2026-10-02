@@ -13,6 +13,7 @@
     function openChat(prefill) {
       const box = document.getElementById("center-chat");
       if (!box) return;
+      closeCenterBoxes("center-chat");
       box.hidden = false;
       renderChat();
       if (prefill !== undefined) {

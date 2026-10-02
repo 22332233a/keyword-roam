@@ -11,6 +11,7 @@ function toggleNote() {
 async function openNote() {
   const box = document.getElementById("center-note");
   if (!box) return;
+  closeCenterBoxes("center-note");
   box.hidden = false;
   box.innerHTML = `<b>📝 笔记「${esc(currentWord)}」</b>
   <textarea id="note-input" placeholder="写点什么:看了哪些视频、自己的理解、下回想挖的小径…"></textarea>

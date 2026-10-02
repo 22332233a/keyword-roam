@@ -246,6 +246,12 @@
       padding: 4px 14px;
     }
 
+    /* 次级动作的小图标档:重掷/思考过程这类低频操作 */
+    .deep-btn.sm {
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+
     .links {
       font-size: 13px;
     }
@@ -328,6 +334,11 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       text-align: left;
+      white-space: normal;   /* 挡住 detail-box 的 pre-wrap:否则模板换行缩进会变成匿名空盒子,把卡片撑出大段空气 */
+    }
+
+    .r-toolbar {
+      white-space: normal;
     }
 
     .r-grid h4 {

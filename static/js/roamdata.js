@@ -47,12 +47,14 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
 
     /* ===== 📚 整树补详情:拉清单→确认→前端逐个调 /api/expand,可随时停 ===== */
     let treeFillStop = false;
+    let treeFillRunning = false;   // 防重入记在模块级:面板重渲染会让按钮上的标记归零,两个循环并跑就重复请求了
 
     async function fillTreeDetails(deepOnly) {
       const btn = document.getElementById("tree-fill-btn");
       const prog = document.getElementById("tree-fill-progress");
-      if (!btn || !prog || btn.dataset.running === "1") { treeFillStop = true; return; }
-      btn.dataset.running = "1";
+      if (!btn || !prog) return;
+      if (treeFillRunning) { prog.textContent = "上一轮还在跑,点进度文字可停止"; return; }
+      treeFillRunning = true;
       treeFillStop = false;
       prog.textContent = "拉清单…";
       let list;
@@ -61,17 +63,17 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
         list = (await resp.json()).items ?? [];
       } catch (err) {
         prog.textContent = "清单拉取失败:" + (err.message || err);
-        btn.dataset.running = "0";
+        treeFillRunning = false;
         return;
       }
       const todo = list.filter(it => !it.has_detail && !it.black && (!deepOnly || it.grp === "deep"));
       if (!todo.length) {
         prog.textContent = deepOnly ? "深挖词的详情都齐了 ✓" : "这棵树的详情都齐了 ✓";
-        btn.dataset.running = "0";
+        treeFillRunning = false;
         return;
       }
       if (!confirm(`${deepOnly ? "深挖维度里" : "这棵树共"} ${todo.length} 个词缺详情(整树 ${list.length} 词,其余已有/已拉黑,自动跳过)。\n每条约 1 分钱,预计 1~2 分钟,生成中可点进度文字停止。继续?`)) {
-        btn.dataset.running = "0";
+        treeFillRunning = false;
         prog.textContent = "";
         return;
       }
@@ -95,7 +97,7 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
       }
       renderChips();
       refreshSeen();
-      btn.dataset.running = "0";
+      treeFillRunning = false;
       prog.textContent = treeFillStop
         ? `已停止:完成 ${done}/${todo.length}`
         : `完成 ${done}/${todo.length}` + (failed.length ? ` · 失败:${failed.join("、")}` : " · 全部成功 ✓");

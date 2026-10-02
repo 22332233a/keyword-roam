@@ -432,7 +432,8 @@ def chat_api():
 
     asks = load_asks()
     key = f"{word}:::{q}"
-    if not history and key in asks:  # 只有无上下文的首轮吃缓存:带语境的回答不该覆盖原答案
+    regen = body.get("regen") is True  # 🔄重新回答:跳过 asks 缓存,新答案会覆盖回同一条
+    if not history and not regen and key in asks:  # 只有无上下文的首轮吃缓存:带语境的回答不该覆盖原答案
         return jsonify({"cached": True, "data": asks[key]})
 
     user_msg = f"中心词:{word or '(无)'}\n正在阅读的介绍:{context or '(无)'}\n我的问题:{q}"

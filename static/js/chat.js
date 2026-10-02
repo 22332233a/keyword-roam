@@ -30,6 +30,7 @@
       ).join("");
       box.innerHTML = `<div class="chat-list" id="chat-list">${msgs ||
         `<div style="color:#6a6f7c">关于「${esc(currentWord)}」随便问,介绍原文我带着当上下文</div>`}</div>
+      ${hist.length >= 2 && !loading ? `<div class="chat-regen" onclick="regenChat()" title="删掉最后一轮,重新生成回答">🔄 重新回答</div>` : ""}
       <input id="chat-input" placeholder="接着问,回车发送" ${loading ? "disabled" : ""}>`;
       const list = document.getElementById("chat-list");
       if (loading) list.insertAdjacentHTML("beforeend", `<div class="chat-m ai">答:想一会儿…</div>`);
@@ -39,12 +40,12 @@
       if (!loading && !chatBusy && hist.length === 0) inp.focus();
     }
 
-    async function sendChat() {
+    async function sendChat(qOverride, regen) {
       const inp = document.getElementById("chat-input");
-      const q = (inp?.value || "").trim();
+      const q = ((qOverride ?? inp?.value) || "").trim();
       if (!q || chatBusy) return;
       chatBusy = true;   // 只当防重入闸门,不禁用输入框(渲染态只看 loading)
-      inp.value = "";
+      if (!qOverride && inp) inp.value = "";
       const hist = chatMem.get(currentWord) ?? [];
       const dbox = document.getElementById("center-detail");
       let ctx = "";
@@ -61,7 +62,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            word: currentWord, q, ctx,
+            word: currentWord, q, ctx, regen: !!regen,
             history: hist.slice(-12).map(m => ({ role: m.role, content: m.content })),  // 最近 6 轮
           }),
         });
@@ -71,15 +72,29 @@
         chatMem.set(currentWord, hist);
       } catch (err) {
         errMsg = err.message || String(err);
+        if (regen) {   // 重答失败:至少把问题留回记录,别让刚才删掉的一轮真消失
+          hist.push({ role: "user", content: q });
+          chatMem.set(currentWord, hist);
+        }
       }
       chatBusy = false;
       renderChat();
-      if (errMsg) {   // 问题还回输入框,气泡不算数
-        const i2 = document.getElementById("chat-input");
-        if (i2) { i2.value = q; i2.focus(); }
+      if (errMsg) {   // 正常发送:问题还回输入框,气泡不算数
+        if (!regen && inp) { inp.value = q; inp.focus(); }
         document.getElementById("chat-list")
           .insertAdjacentHTML("beforeend", `<div class="chat-m err">出错:${esc(errMsg)}</div>`);
       }
+    }
+
+    /* 🔄 重新回答:删掉最后一轮问答,带同样的问题和上下文再来一次(regen 跳过 asks 缓存) */
+    function regenChat() {
+      if (chatBusy) return;
+      const hist = chatMem.get(currentWord) ?? [];
+      if (hist.length < 2 || hist[hist.length - 1].role !== "assistant") return;
+      const q = hist[hist.length - 2].content;
+      chatMem.set(currentWord, hist.slice(0, -2));
+      renderChat();
+      sendChat(q, true);
     }
 
     

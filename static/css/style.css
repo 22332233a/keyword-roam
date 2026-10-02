@@ -631,3 +631,12 @@
   #settings-msg { color: #7ec97e; }
   #settings-close { margin-left: auto; cursor: pointer; color: #6a6f7c; }
   #settings-close:hover { color: #e06c75; }
+
+  .chat-regen {
+    text-align: center;
+    font-size: 12px;
+    color: #6a6f7c;
+    cursor: pointer;
+    padding: 2px 0 4px;
+  }
+  .chat-regen:hover { color: #ffb454; }

@@ -391,15 +391,24 @@ def ask():
         return jsonify({"error": "未设置 DEEPSEEK_API_KEY 环境变量,设置后重启本程序"}), 500
 
     user_msg = f"中心词:{word or '(无)'}\n正在阅读的介绍:{context or '(无)'}\n我的问题:{question}"
-    try:
-        data, _reasoning = chat(ASK_SYSTEM_PROMPT, user_msg, temperature=0.7)  # 追问求准,温度降回来
-        assert isinstance(data.get("answer"), str) and data["answer"].strip(), "模型返回缺少 answer"
-    except requests.RequestException as e:
-        log_abnormal("API请求失败(ask)", f"{word}::{question[:30]}", str(e)[:200])
-        return jsonify({"error": f"API 请求失败:{e}"}), 502
-    except (json.JSONDecodeError, AssertionError, ValueError) as e:
-        log_abnormal("回答生成失败(ask)", f"{word}::{question[:30]}", str(e)[:200])
-        return jsonify({"error": f"回答生成失败:{e}"}), 502
+    last_err: Exception = ValueError("未执行")
+    answer = ""
+    for _attempt in range(2):  # 与对话同款:腰斩(半句话)重掷一次,宁可不答不上屏半截
+        try:
+            data, _reasoning = chat(ASK_SYSTEM_PROMPT, user_msg, temperature=0.7)  # 追问求准,温度降回来
+            answer = data.get("answer")
+            assert isinstance(answer, str) and answer.strip(), "模型返回缺少 answer"
+            assert len(answer) <= 200, f"回答超长({len(answer)}字)"
+            if not answer.rstrip().endswith(END_PUNCT):
+                log_abnormal("追问疑似腰斩", f"{word}::{question[:30]}", f"结尾:{answer[-40:]!r}")
+                raise ValueError("回答话说一半,重掷一次")
+            break
+        except (requests.RequestException, json.JSONDecodeError, AssertionError, ValueError) as e:
+            last_err = e
+            answer = ""
+    else:
+        log_abnormal("回答生成失败(ask)", f"{word}::{question[:30]}", str(last_err)[:200])
+        return jsonify({"error": f"回答生成失败:{last_err}"}), 502
 
     entry = {"word": word, "question": question, "answer": data["answer"], "time": int(time.time())}
     asks[key] = entry

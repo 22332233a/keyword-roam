@@ -8,7 +8,7 @@ const BUILTIN_FLAVORS = [
   "悬疑侦探向,多讲事故和内幕",
 ];
 
-let setDraft = { detail_len: "标准", temp_style: "标准", flavors: [] };
+let setDraft = { detail_len: "标准", temp_style: "标准", flavors: [], blacklist: [] };
 
 function setSegActive(segId, val) {
   document.querySelectorAll(`#${segId} span`)
@@ -24,9 +24,11 @@ async function openSettings() {
     if (resp.ok) setDraft = await resp.json();
   } catch { /* 拉不到就用草稿默认,面板照常打开 */ }
   if (!Array.isArray(setDraft.flavors)) setDraft.flavors = [];
+  if (!Array.isArray(setDraft.blacklist)) setDraft.blacklist = [];
   setSegActive("seg-detail-len", setDraft.detail_len);
   setSegActive("seg-temp", setDraft.temp_style);
   renderFlavorChips();
+  renderBlChips();
 }
 
 function closeSettings() {
@@ -95,4 +97,44 @@ function setDetailLen(el) {
 function setTempStyle(el) {
   setSegActive("seg-temp", el.dataset.v);
   saveSettings({ temp_style: el.dataset.v });
+}
+
+/* ===== 黑名单:永不推荐的词;卡片 🚫 一键拉黑也走这里 ===== */
+function renderBlChips() {
+  const wrap = document.getElementById("bl-chips");
+  if (!wrap) return;
+  wrap.innerHTML = (setDraft.blacklist || []).map(w =>
+    `<span class="chip fchip" title="点 × 解禁">${esc(w)}<span class="fx" data-v="${esc(w)}" onclick="delBlacklist(this.dataset.v)">×</span></span>`
+  ).join("") || `<span style="color:#6a6f7c">还没有拉黑的词</span>`;
+}
+
+async function addBlacklist() {
+  const inp = document.getElementById("bl-new");
+  const w = (inp?.value || "").trim().slice(0, 30);
+  if (!w) return;
+  await pushBlacklist(w);
+  if (inp) inp.value = "";
+}
+
+async function blacklistWord(w) {
+  const added = await pushBlacklist(w);
+  const st = document.getElementById("status");
+  if (st) {
+    st.textContent = added ? `已拉黑「${w}」,以后不会再推荐它` : `「${w}」已经在黑名单里了`;
+    setTimeout(() => st.textContent = "", 2500);
+  }
+}
+
+async function pushBlacklist(w) {
+  const added = !setDraft.blacklist.includes(w);
+  if (added) setDraft.blacklist.push(w);
+  renderBlChips();
+  await saveSettings({ blacklist: setDraft.blacklist });
+  return added;
+}
+
+function delBlacklist(w) {
+  setDraft.blacklist = setDraft.blacklist.filter(x => x !== w);
+  renderBlChips();
+  saveSettings({ blacklist: setDraft.blacklist });
 }

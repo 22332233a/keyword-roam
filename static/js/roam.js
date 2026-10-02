@@ -1,5 +1,7 @@
 async function roam(word) { await go(word, "basic"); }
     async function roamDeep(word) { await go(word, "deep"); }
+    /* 🎲单词重掷:无视缓存重新生成当前页模式的词;详情另有 🔄重写,黑名单在设置面板 */
+    async function rerollWord() { await go(currentWord, currentViewMode, true); }
     /* 按当前页面模式打开一个词:深挖页里点击=深挖,漫游页里点击=漫游 */
     function goWord(word) { go(word, currentViewMode); }
 
@@ -16,18 +18,18 @@ async function roam(word) { await go(word, "basic"); }
       goWord(word);
     }
 
-    async function go(word, mode) {
+    async function go(word, mode, force) {
       word = (word || "").trim();
       if (!word) return;
       currentWord = word;
       document.getElementById("word-input").value = word;
       const status = document.getElementById("status");
-      status.textContent = mode === "deep" ? "深挖中…(思维链模型,多等几秒)" : "问 AI 中…";
+      status.textContent = (force ? "重掷中…(清掉旧缓存重新生成)" : mode === "deep" ? "深挖中…(思维链模型,多等几秒)" : "问 AI 中…");
       status.className = "";
 
       try {
         const flavor = document.getElementById("flavor-input").value;
-        const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&flavor=${encodeURIComponent(flavor)}&mode=${mode}`);
+        const resp = await fetch(`/api/expand?word=${encodeURIComponent(word)}&flavor=${encodeURIComponent(flavor)}&mode=${mode}${force ? "&force=1" : ""}`);
         const body = await resp.json();
         if (!resp.ok) throw new Error(body.error || body.statusText);
 
@@ -57,6 +59,7 @@ async function roam(word) { await go(word, "basic"); }
        <button class="deep-btn lg" onclick="toggleDetail('${w}')">📖详情</button>
        <button class="deep-btn lg" onclick="roamData()">🧭漫游结果</button>
        <button class="deep-btn lg" onclick="toggleChat()">💬对话</button>
+       <button class="deep-btn lg" onclick="rerollWord()" title="清掉这个词当前页模式(漫游/深挖)的缓存,花钱重新生成">🎲重掷</button>
      </div>
      <div class="detail-box" id="center-detail" hidden></div>
      <div class="detail-box think-box" id="center-think" hidden></div>

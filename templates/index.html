@@ -84,6 +84,21 @@
           <span data-v="抽风" onclick="setTempStyle(this)">抽风</span>
         </div>
       </div>
+      <div class="set-group">
+        <label>黑名单<span class="set-note">永不推荐的词(卡片 🚫 一键拉黑,或手动加);生成时拼进提示词,可随时解禁</span></label>
+        <div id="bl-chips"></div>
+        <div class="set-row">
+          <input id="bl-new" placeholder="手动添加不想再见的词…">
+          <button onclick="addBlacklist()">拉黑</button>
+        </div>
+      </div>
+      <div class="set-group">
+        <label>足迹导出<span class="set-note">JSON=完整备份(含追问);Markdown=可读词表。删缓存=地图清零,常备份</span></label>
+        <div class="seg">
+          <span onclick="location.href='/api/export?format=json'">📦 下载 JSON 备份</span>
+          <span onclick="location.href='/api/export?format=md'">📄 下载 Markdown 词表</span>
+        </div>
+      </div>
       <div id="settings-foot">
         <span id="settings-msg"></span>
         <span id="settings-close" onclick="closeSettings()">✕ 关闭</span>

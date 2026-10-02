@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 import requests
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 
 BASE_DIR = Path(__file__).resolve().parent
 CACHE_FILE = BASE_DIR / "data" / "cache.json"
@@ -129,7 +129,7 @@ def log_abnormal(kind: str, who: str, detail: str = "") -> None:
 
 
 # ===== ⚙ 用户设置(data/settings.json,单机个人化):详情长度/放飞程度/口味预设 =====
-DEFAULT_SETTINGS = {"detail_len": "标准", "temp_style": "标准", "flavors": []}
+DEFAULT_SETTINGS = {"detail_len": "标准", "temp_style": "标准", "flavors": [], "blacklist": []}
 DETAIL_LEN_CHARS = {"短": 80, "标准": 150, "长": 300}    # 详情提示词的目标字数
 DETAIL_CAP_CHARS = {"短": 160, "标准": 300, "长": 460}   # 校验硬上限,给发挥留余量
 TEMP_ROAM = {"稳": 0.8, "标准": 1.1, "抽风": 1.5}        # 漫游求惊喜,幅度大
@@ -153,6 +153,9 @@ def load_settings() -> dict:
     if not isinstance(s["flavors"], list):
         s["flavors"] = []
     s["flavors"] = [str(f).strip()[:60] for f in s["flavors"] if str(f).strip()][:20]
+    if not isinstance(s["blacklist"], list):
+        s["blacklist"] = []
+    s["blacklist"] = [str(w).strip()[:30] for w in s["blacklist"] if str(w).strip()][:200]
     return s
 
 
@@ -260,9 +263,12 @@ def build_prompt(word: str, flavor: str, visited: list[str], mode: str = "basic"
     在线请求和批量预热共用,保证两条路的提示词一字不差。"""
     visited_text = "、".join(visited[-40:]) if visited else "(还没有)"
     user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
+    s = load_settings()
+    if s["blacklist"]:
+        # 黑名单单独成行且永不截断——已访问只留最近40个,黑名单截掉了就会从别的词身上长回来
+        user_msg += f"\n黑名单(用户明确不想再见,绝对不要推荐):{'、'.join(s['blacklist'])}"
     if ctx:
         user_msg += f"\n它出自的介绍片段:{ctx}"
-    s = load_settings()
     system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT,
               # 详情长度是用户设置:模板里的"150字"按档位替换(校验上限 DETAIL_CAP_CHARS 同步放宽)
               "detail": DETAIL_SYSTEM_PROMPT.replace("150", str(DETAIL_LEN_CHARS[s["detail_len"]]))}[mode]
@@ -453,6 +459,55 @@ def chat_api():
     return jsonify({"cached": False, "data": entry})
 
 
+@app.route("/api/export")
+def export_data():
+    """足迹导出:cache.json(+asks.json)打包下载。json=完整备份(可再导回),md=可读词表。
+    删缓存=地图清零,这里是后悔药。"""
+    fmt = request.args.get("format", "json")
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    cache = load_cache()
+    if fmt == "md":
+        lines = [
+            "# 关键词漫游足迹",
+            "",
+            f"> 导出时间:{time.strftime('%Y-%m-%d %H:%M:%S')} · 共 {len(cache)} 词 · 关键词漫游器",
+        ]
+        for w, d in sorted(cache.items(), key=lambda kv: kv[1].get("time") or 0):
+            lines.append(f"\n## {w}")
+            if d.get("time"):
+                lines.append(f"*{time.strftime('%Y-%m-%d %H:%M', time.localtime(d['time']))}"
+                             f"{(' · ' + d['flavor']) if d.get('flavor') else ''}*")
+            for title, grp in (("⬆ 上级", "parents"), ("⬇ 下级", "children"), ("↔ 相邻", "similar")):
+                items = d.get(grp) or []
+                if items:
+                    lines.append(f"- **{title}**:" + "、".join(
+                        f"{it.get('word')}({it.get('note')})" if it.get("note") else str(it.get("word"))
+                        for it in items))
+            if d.get("detail"):
+                lines.append(f"- **📖 详情**:{d['detail']}")
+            for dim in (d.get("deep") or {}).get("dimensions") or []:
+                its = dim.get("items") or []
+                if its:
+                    lines.append(f"- **🔍 {dim.get('name', '?')}**:" + "、".join(
+                        f"{it.get('word')}({it.get('note')})" if it.get("note") else str(it.get("word"))
+                        for it in its))
+        asks = load_asks()
+        if asks:
+            lines.append(f"\n---\n\n## 附录:缓存的追问({len(asks)} 条)")
+            for a in sorted(asks.values(), key=lambda x: x.get("time") or 0):
+                lines.append(f"- **{a.get('word')}**:{a.get('question')} → {a.get('answer')}")
+        md = "\n".join(lines)
+        return Response(
+            md, mimetype="text/markdown; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename=roam-footprint-{stamp}.md"},
+        )
+    payload = {"exported_at": int(time.time()), "format": "roam-backup-v1", "cache": cache, "asks": load_asks()}
+    return Response(
+        json.dumps(payload, ensure_ascii=False, indent=1), mimetype="application/json",
+        headers={"Content-Disposition": f"attachment; filename=roam-backup-{stamp}.json"},
+    )
+
+
 @app.route("/api/settings", methods=["GET", "POST"])
 def settings_api():
     """⚙设置面板读写。即改即生效(下一次生成起),缓存里的旧数据不动。
@@ -473,6 +528,10 @@ def settings_api():
         if not isinstance(body["flavors"], list):
             return jsonify({"error": "flavors 要是字符串列表"}), 400
         s["flavors"] = [str(f).strip()[:60] for f in body["flavors"] if str(f).strip()][:20]
+    if "blacklist" in body:
+        if not isinstance(body["blacklist"], list):
+            return jsonify({"error": "blacklist 要是字符串列表"}), 400
+        s["blacklist"] = [str(w).strip()[:30] for w in body["blacklist"] if str(w).strip()][:200]
     save_settings(s)
     return jsonify(s)
 

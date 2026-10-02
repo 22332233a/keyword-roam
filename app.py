@@ -542,11 +542,37 @@ def tree_words():
 @app.route("/api/export")
 def export_data():
     """足迹导出:cache.json(+asks.json)打包下载。json=完整备份(可再导回),md=可读词表。
-    删缓存=地图清零,这里是后悔药。"""
+    what=notes 时只导笔记(独立成 md/文件)。删缓存=地图清零,这里是后悔药。"""
     fmt = request.args.get("format", "json")
+    what = request.args.get("what", "all")
     stamp = time.strftime("%Y%m%d-%H%M%S")
     cache = load_cache()
     notes = load_notes()
+
+    if what == "notes":   # 仅笔记:md=可读合集,json=原始数据
+        if fmt == "md":
+            lines = [
+                "# 关键词漫游笔记",
+                "",
+                f"> 导出时间:{time.strftime('%Y-%m-%d %H:%M:%S')} · 共 {len(notes)} 条 · 关键词漫游器",
+            ]
+            for w, n in sorted(notes.items(), key=lambda kv: kv[1].get("time") or 0):
+                lines.append(f"\n## {w}")
+                if n.get("time"):
+                    lines.append(f"*{time.strftime('%Y-%m-%d %H:%M', time.localtime(n['time']))}*")
+                lines.append("")
+                lines.append(n.get("text", "").strip())
+            return Response(
+                "\n".join(lines), mimetype="text/markdown; charset=utf-8",
+                headers={"Content-Disposition": f"attachment; filename=roam-notes-{stamp}.md"},
+            )
+        return Response(
+            json.dumps({"exported_at": int(time.time()), "format": "roam-notes-v1", "notes": notes},
+                       ensure_ascii=False, indent=1),
+            mimetype="application/json",
+            headers={"Content-Disposition": f"attachment; filename=roam-notes-{stamp}.json"},
+        )
+
     if fmt == "md":
         lines = [
             "# 关键词漫游足迹",

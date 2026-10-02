@@ -103,8 +103,12 @@
       <div class="set-group">
         <label>足迹导出<span class="set-note">JSON=完整备份(含追问);Markdown=可读词表。删缓存=地图清零,常备份</span></label>
         <div class="seg">
-          <span onclick="location.href='/api/export?format=json'">📦 下载 JSON 备份</span>
-          <span onclick="location.href='/api/export?format=md'">📄 下载 Markdown 词表</span>
+          <span onclick="location.href='/api/export?format=json'">📦 全部 JSON</span>
+          <span onclick="location.href='/api/export?format=md'">📄 全部 Markdown</span>
+        </div>
+        <div class="seg" style="margin-top:6px">
+          <span onclick="location.href='/api/export?what=notes&format=md'">📝 笔记 MD</span>
+          <span onclick="location.href='/api/export?what=notes&format=json'">🧊 笔记 JSON</span>
         </div>
       </div>
       <div id="settings-foot">

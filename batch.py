@@ -520,7 +520,13 @@ def cmd_agent_prepare(args) -> None:
     if not items:
         raise SystemExit("没有可生成的目标(该模式都齐了?换个 --scope 或用 --word 指定)")
     AGENT_DIR.mkdir(parents=True, exist_ok=True)
-    todo = AGENT_DIR / f"todo-{time.strftime('%Y%m%d-%H%M%S')}.jsonl"
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    modes_tag = "-".join(args.mode or ["detail"])
+    todo = AGENT_DIR / f"todo-{stamp}-{modes_tag}.jsonl"
+    n = 2
+    while todo.exists():  # 同一秒出两份题时别互相覆盖
+        todo = AGENT_DIR / f"todo-{stamp}-{modes_tag}-{n}.jsonl"
+        n += 1
     with todo.open("w", encoding="utf-8") as f:
         for it in items:
             system, user_msg, temperature = build_prompt(
@@ -529,7 +535,7 @@ def cmd_agent_prepare(args) -> None:
             f.write(json.dumps({**it, "system": system, "user": user_msg}, ensure_ascii=False) + "\n")
     print(f"出题 {len(items)} 条 → {todo.relative_to(BASE_DIR)}")
     print("答卷人(对话里的模型)逐条按 system+user 生成正文,每行一条写进答卷文件:")
-    print('  {"custom_id": "basic-0", "content": "<按该条提示词生成的原文>"}')
+    print(f'  {{"custom_id": "{(items[0]["custom_id"])}", "content": "<按该条提示词生成的原文>"}}')
     print(f"然后收卷:python batch.py agent-merge {todo.name} <答卷文件路径>")
 
 

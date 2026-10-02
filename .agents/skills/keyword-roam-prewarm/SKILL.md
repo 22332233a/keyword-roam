@@ -54,7 +54,11 @@ python batch.py agent-prepare --mode basic --scope neighbors --limit 5
    note≤15 字），一次生成 3~5 条是质量上限，多了注意力会摊薄；
 3. 收卷：`python batch.py agent-merge todo-xxx.jsonl 答卷.jsonl`（文件名不给路径会自动到
    `data/agent_in/` 下找）。不过关的词会点名打印，重写 content 再收一轮；
-4. 你写的内容也会被原样校验——parse_llm_json 容忍代码围栏，但格式和数量底线不豁免。
+4. 你写的内容也会被原样校验——parse_llm_json 容忍代码围栏，但格式和数量底线不豁免；
+   正文里的引号用「」（ASCII 双引号会打断答卷本身的 JSON，校验会以语法错误打回）。
+5. 两个坑：`--word` 是跨 `--mode` 全局的（argparse 只有一个 --word 列表），要给不同模式
+   指定不同词就分开跑几次 `agent-prepare`；连跑两次出题文件名会带模式标签防覆盖
+   （todo-<时间戳>-<模式>.jsonl），别当成两个一样的文件。
 
 十几个词以上别用这条（上下文越滚越贵），改走 prewarm 在线并发。
 

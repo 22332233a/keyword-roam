@@ -648,3 +648,25 @@
     padding: 2px 0 4px;
   }
   .chat-regen:hover { color: #ffb454; }
+
+  /* ===== 📚 整树补详情工具栏 ===== */
+  .r-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  #tree-fill-btn {
+    font-size: 12px;
+    padding: 4px 12px;
+    background: #232734;
+    color: #b8bdc9;
+    border: 1px solid #3a3f4e;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  #tree-fill-btn:hover { border-color: #4a7dff; }
+
+  #tree-fill-progress { color: #8a8f9c; font-size: 12px; }

@@ -473,6 +473,37 @@ def chat_api():
     return jsonify({"cached": False, "data": entry})
 
 
+@app.route("/api/tree-words")
+def tree_words():
+    """📚一键补详情的原料:这个词的漫游树+深挖树里出现过的词(去重),
+    标注谁缺详情、谁在黑名单。词表只是清单,生成本体仍走 /api/expand。"""
+    word = request.args.get("word", "").strip()
+    if not word:
+        return jsonify({"error": "缺少 word 参数"}), 400
+    cache = load_cache()
+    d = cache.get(word) or {}
+    seen, items = set(), []
+
+    def add(w: str, grp: str) -> None:
+        w = str(w or "").strip()
+        if not w or w in seen:
+            return
+        seen.add(w)
+        items.append({
+            "word": w, "grp": grp,
+            "has_detail": bool((cache.get(w) or {}).get("detail")),
+            "black": w in set(load_settings()["blacklist"]),
+        })
+
+    for grp in ("parents", "children", "similar"):
+        for it in d.get(grp) or []:
+            add(it.get("word"), "roam")
+    for dim in (d.get("deep") or {}).get("dimensions") or []:
+        for it in dim.get("items") or []:
+            add(it.get("word"), "deep")
+    return jsonify({"count": len(items), "items": items})
+
+
 @app.route("/api/export")
 def export_data():
     """足迹导出:cache.json(+asks.json)打包下载。json=完整备份(可再导回),md=可读词表。

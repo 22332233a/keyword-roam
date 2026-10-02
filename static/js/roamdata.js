@@ -34,11 +34,72 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
       <div class="note">${esc(it.note)}</div>
     </div>`;
       };
-      box.innerHTML = `<div class="r-grid">
+      box.innerHTML = `<div class="r-toolbar">
+      <button id="tree-fill-btn" onclick="fillTreeDetails()" title="给这棵树里所有缺详情的词批量生成 📖 详情">📚 整树补详情</button>
+      <span id="tree-fill-progress" class="map-note" title="跑的时候点这里停止"></span>
+    </div>
+    <div class="r-grid">
     <div><h4>⬆ 上级分类</h4>${(d.parents ?? []).map(mini).join("")}</div>
     <div><h4>⬇ 下级分类</h4>${(d.children ?? []).map(mini).join("")}</div>
     <div><h4>↔ 相邻词</h4>${(d.similar ?? []).map(mini).join("")}</div>
   </div>`;
+    }
+
+    /* ===== 📚 整树补详情:拉清单→确认→前端逐个调 /api/expand,可随时停 ===== */
+    let treeFillStop = false;
+
+    async function fillTreeDetails() {
+      const btn = document.getElementById("tree-fill-btn");
+      const prog = document.getElementById("tree-fill-progress");
+      if (!btn || !prog || btn.dataset.running === "1") { treeFillStop = true; return; }
+      btn.dataset.running = "1";
+      treeFillStop = false;
+      prog.textContent = "拉清单…";
+      let list;
+      try {
+        const resp = await fetch(`/api/tree-words?word=${encodeURIComponent(currentWord)}`);
+        list = (await resp.json()).items ?? [];
+      } catch (err) {
+        prog.textContent = "清单拉取失败:" + (err.message || err);
+        btn.dataset.running = "0";
+        return;
+      }
+      const todo = list.filter(it => !it.has_detail && !it.black);
+      if (!todo.length) {
+        prog.textContent = "这棵树的详情都齐了 ✓";
+        btn.dataset.running = "0";
+        return;
+      }
+      const skipped = list.length - todo.length;
+      if (!confirm(`这棵树共 ${list.length} 词,其中 ${todo.length} 个缺详情(另有 ${skipped} 个已有/已拉黑,自动跳过)。\n每条约 1 分钱,预计 1~2 分钟,生成中可点进度文字停止。继续?`)) {
+        btn.dataset.running = "0";
+        prog.textContent = "";
+        return;
+      }
+      const flavor = document.getElementById("flavor-input").value;
+      const failed = [];
+      let done = 0;
+      for (const it of todo) {
+        if (treeFillStop || !document.getElementById("tree-fill-progress")) break;  // 用户停止/收起面板
+        prog.textContent = `${done + 1}/${todo.length}:${it.word}…`;
+        try {
+          const resp = await fetch(`/api/expand?word=${encodeURIComponent(it.word)}&mode=detail&flavor=${encodeURIComponent(flavor)}`);
+          const body = await resp.json();
+          if (!resp.ok) throw new Error(body.error || resp.statusText);
+          const feats = new Set(visited.get(it.word)?.feats ?? []);
+          feats.add("detail");
+          visited.set(it.word, { feats: [...feats], time: Date.now() / 1000 });
+          prog.textContent = `${++done}/${todo.length} ✓ ${it.word}`;
+        } catch (err) {
+          failed.push(`${it.word}(${(err.message || err).slice(0, 40)})`);
+        }
+      }
+      renderChips();
+      refreshSeen();
+      btn.dataset.running = "0";
+      prog.textContent = treeFillStop
+        ? `已停止:完成 ${done}/${todo.length}`
+        : `完成 ${done}/${todo.length}` + (failed.length ? ` · 失败:${failed.join("、")}` : " · 全部成功 ✓");
     }
 
     

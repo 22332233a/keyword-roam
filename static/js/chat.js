@@ -13,8 +13,7 @@
     function openChat(prefill) {
       const box = document.getElementById("center-chat");
       if (!box) return;
-      closeCenterBoxes("center-chat");
-      box.hidden = false;
+      box.hidden = false;   // 对话=底部常驻区,不参与主区手风琴,可以和详情/漫游结果同屏
       renderChat();
       if (prefill !== undefined) {
         const inp = document.getElementById("chat-input");

@@ -56,10 +56,5 @@
       if (!box.hidden && box.dataset.owner === word) { box.hidden = true; return; }
       showDetail(word, false);
     }
-    /* 侧栏词条的📖:右栏详情框展示该词,并滚到可见处 */
-    function sideDetail(word) {
-      showDetail(word, false);
-      document.getElementById("center-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
 
     

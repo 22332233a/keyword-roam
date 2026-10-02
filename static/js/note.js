@@ -1,33 +1,24 @@
-/* ===== 📝笔记:绑在当前词上的手写便签,一词一条,停手自动存,重启不丢(data/notes.json) ===== */
+/* ===== 📝笔记:常驻左栏,一词一条,停手自动存(data/notes.json),重启不丢 ===== */
 let noteSaveTimer = null;
 
 function toggleNote() {
-  const box = document.getElementById("center-note");
-  if (!box) return;
-  if (!box.hidden) { box.hidden = true; return; }
-  openNote();
+  const dock = document.getElementById("sidebar");
+  if (dock) dock.classList.toggle("collapsed");
 }
 
-async function openNote() {
-  const box = document.getElementById("center-note");
-  if (!box) return;
-  closeCenterBoxes("center-note");
-  box.hidden = false;
-  box.innerHTML = `<b>📝 笔记「${esc(currentWord)}」</b>
-  <textarea id="note-input" placeholder="写点什么:看了哪些视频、自己的理解、下回想挖的小径…"></textarea>
-  <span class="note-status" id="note-status"></span>`;
+/* 换词时由 renderCenter 调用:标题跟随,重新拉取该词的笔记 */
+async function refreshNoteDock() {
+  const title = document.getElementById("note-title");
   const ta = document.getElementById("note-input");
+  if (!title || !ta) return;
+  title.textContent = `📝 笔记「${currentWord}」`;
+  ta.value = "";
+  const st = document.getElementById("note-status");
+  if (st) st.textContent = "";
   try {
     const resp = await fetch(`/api/note?word=${encodeURIComponent(currentWord)}`);
     ta.value = (await resp.json()).text ?? "";
   } catch { /* 拉不到就当空白笔记 */ }
-  ta.addEventListener("input", () => {
-    clearTimeout(noteSaveTimer);
-    const st = document.getElementById("note-status");
-    if (st) st.textContent = "…";
-    noteSaveTimer = setTimeout(saveNote, 600);   // 停手半秒自动存,不打断写字
-  });
-  ta.focus();
 }
 
 async function saveNote() {
@@ -46,3 +37,11 @@ async function saveNote() {
     if (st) st.textContent = "保存失败:" + (err.message || err);
   }
 }
+
+/* 输入框是静态 DOM,脚本加载时直接挂防抖自动保存 */
+document.getElementById("note-input").addEventListener("input", () => {
+  clearTimeout(noteSaveTimer);
+  const st = document.getElementById("note-status");
+  if (st) st.textContent = "…";
+  noteSaveTimer = setTimeout(saveNote, 600);   // 停手半秒自动存,不打断写字
+});

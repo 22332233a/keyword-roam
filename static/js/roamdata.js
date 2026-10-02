@@ -1,5 +1,12 @@
 const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得重复请求)
 
+    /* 强制展开漫游结果盒(手风琴成员):漫游/深挖完成后由 renderBasic/renderDeep 调用 */
+    async function openRoamData() {
+      const box = document.getElementById("center-roamdata");
+      if (!box || !box.hidden) return;   // 已开就不重复拉
+      await roamData();
+    }
+
     async function roamData() {
       const box = document.getElementById("center-roamdata");
       if (!box) return;
@@ -35,6 +42,12 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
       <div class="note">${esc(it.note)}</div>
     </div>`;
       };
+      const grid = items => `<div class="r-grid">${items.map(mini).join("")}</div>`;
+      // 深挖维度跟在漫游三组后面(同一个小盒子,"漫游和详情内容")
+      const dims = (d.deep?.dimensions ?? [])
+        .map(dim => `<h4 style="margin-top:12px">◈ ${esc(dim.name ?? "")}</h4>` +
+          grid(dim.items ?? []))
+        .join("");
       box.innerHTML = `<div class="r-toolbar">
       <button id="tree-fill-btn" onclick="fillTreeDetails()" title="给这棵树里所有缺详情的词批量生成 📖 详情">📚 整树补详情</button>
       <a class="regen-link" onclick="fillTreeDetails(true)" title="只跑深挖维度里的缺详情词">🔍只补深挖词</a>
@@ -44,7 +57,8 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
     <div><h4>⬆ 上级分类</h4>${(d.parents ?? []).map(mini).join("")}</div>
     <div><h4>⬇ 下级分类</h4>${(d.children ?? []).map(mini).join("")}</div>
     <div><h4>↔ 相邻词</h4>${(d.similar ?? []).map(mini).join("")}</div>
-  </div>`;
+  </div>
+    ${dims}`;
     }
 
     /* ===== 📚 整树补详情:拉清单→确认→前端逐个调 /api/expand,可随时停 ===== */

@@ -10,8 +10,9 @@ function esc(s) {
     <a href="https://weixin.sogou.com/weixin?type=2&query=${e}" target="_blank">公众号</a>
   </span>`;
     }
-    /* 手风琴:中心区一次只开一个内容盒。各开盒路径(showDetail/toggleThinking/roamData/openChat/openNote)进来先调它 */
-    const CENTER_BOXES = ["center-detail", "center-think", "center-roamdata", "center-chat", "center-note"];
+    /* 手风琴:主区一次只开一个 AI 显示盒(详情/思考/漫游结果)。
+       对话=底部条、笔记=左栏,两者是常驻工作区,不参与互斥 */
+    const CENTER_BOXES = ["center-detail", "center-think", "center-roamdata"];
     function closeCenterBoxes(except) {
       for (const id of CENTER_BOXES) {
         if (id !== except) {

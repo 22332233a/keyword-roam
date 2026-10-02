@@ -38,11 +38,15 @@
   </div>
 
   <div id="layout">
-    <aside id="sidebar"></aside>
+    <aside id="sidebar">
+      <b id="note-title">📝 笔记</b>
+      <textarea id="note-input" placeholder="写点什么:看了哪些视频、自己的理解、下回想挖的小径…"></textarea>
+      <span class="note-status" id="note-status"></span>
+    </aside>
     <main id="main">
       <div id="center"></div>
+      <div id="center-chat" class="detail-box chat-box" hidden></div>
     </main>
-    <aside id="toc"></aside>
   </div>
 
   <div id="map-view" hidden>

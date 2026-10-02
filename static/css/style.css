@@ -682,11 +682,13 @@
 
   #tree-fill-progress { color: #8a8f9c; font-size: 12px; }
 
-  /* ===== 📝 笔记 ===== */
-  #center-note textarea {
+  /* ===== 📝 笔记左栏(常驻工作区) ===== */
+  #note-title { color: #d8dce6; font-size: 13px; }
+
+  #note-input {
     display: block;
     width: 100%;
-    min-height: 120px;
+    min-height: 300px;
     background: #171a22;
     border: 1px solid #2a2e3a;
     border-radius: 6px;
@@ -698,5 +700,23 @@
     margin-top: 6px;
   }
 
-  #center-note b { color: #d8dce6; }
   .note-status { display: block; font-size: 11px; color: #6a6f7c; margin-top: 4px; }
+
+  #sidebar.collapsed { width: 40px; cursor: pointer; }
+  #sidebar.collapsed #note-title,
+  #sidebar.collapsed #note-input,
+  #sidebar.collapsed .note-status { visibility: hidden; }
+
+  /* ===== 💬 对话底栏(常驻工作区,默认收起) ===== */
+  #center-chat {
+    max-width: 900px;
+    margin: 14px auto 0;
+    background: #1c1f28;
+    border: 1px solid #2a2e3a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #c8cbd4;
+  }
+

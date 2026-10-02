@@ -19,7 +19,7 @@ description: 关键词漫游器(keyword-roam)的缓存预热、批量回填与�
 3. 跑之前瞄一眼 `git status`：`cache.json`/`asks.json` 是不提交的（用户明确政策），
    别顺手 add 进去。
 
-## 首选：在线并发预热（prewarm）
+## 首选：在线并发预热（prewarm）——大批量（十几条以上）走这里
 
 走在线端点，全价但快，RPM=100 是唯一约束（TPM≈10M 用不满）。默认并发 8，遇 429
 已自带指数退避，**不要为了"更快"把并发拉到 30+**——退避风暴只会更慢。
@@ -36,6 +36,27 @@ python batch.py prewarm --mode basic --mode deep --word 词 --word 词  # 指定
 - `--mode` 可重复，互不依赖的模式合成一次跑省时间。
 - 预热结果 `data["src"]="prewarm"`，前端暂不展示该标记，但别删——区分来源有用。
 - 校验不过会自动重掷一次，再不过就放弃并写 `data/abnormal.log`，不是错误，是设计。
+
+## 会话模型直生成（零 API 费，你自己当生成器）
+
+小批量补词（≤10 条）或烟测时首选这条：跳过 MiMo API，由当前会话的模型直接答卷。
+
+```bash
+python batch.py agent-prepare --mode basic --scope neighbors --limit 5
+```
+
+然后你（会话模型）就是答卷人，流程：
+
+1. 读 `data/agent_in/todo-*.jsonl`，**逐条**按其 `system`+`user` 字段生成正文——
+   那就是该词的真实提示词（已带口味偏好、已访问词表、上下文片段），不要自己重新发明格式；
+2. 每行 `{"custom_id": "basic-0", "content": "<按该条提示词生成的原文>"}` 写进同目录答卷文件；
+   注意校验下限要满足（parents≥1/children≥3/similar≥5，similar 里至少 2 个跨领域词，
+   note≤15 字），一次生成 3~5 条是质量上限，多了注意力会摊薄；
+3. 收卷：`python batch.py agent-merge todo-xxx.jsonl 答卷.jsonl`（文件名不给路径会自动到
+   `data/agent_in/` 下找）。不过关的词会点名打印，重写 content 再收一轮；
+4. 你写的内容也会被原样校验——parse_llm_json 容忍代码围栏，但格式和数量底线不豁免。
+
+十几个词以上别用这条（上下文越滚越贵），改走 prewarm 在线并发。
 
 ## 离线批量（submit/poll/ingest）：只在用户开口时用
 

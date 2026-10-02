@@ -38,7 +38,16 @@ python app.py
 
 ## 缓存预热(可选)
 
-想把词图一次铺大,不用一个个点,`batch.py` 给了两条路,挑词/提示词/校验/合并完全同源:
+想把词图一次铺大,不用一个个点,`batch.py` 给了三条路,挑词/提示词/校验/合并完全同源:
+
+**会话模型直生成(零 API 费,适合补几个词/烟测)**:出题文件交给对话里的 AI 答卷,收卷照常校验入库:
+
+```bash
+python batch.py agent-prepare --mode basic --scope neighbors --limit 5
+# 让对话里的模型按 data/agent_in/todo-*.jsonl 里每条的 system+user 生成正文,
+# 写成答卷 jsonl(每行 {"custom_id":"basic-0","content":"<生成的原文>"})
+python batch.py agent-merge todo-xxx.jsonl 答卷.jsonl
+```
 
 **在线并发(推荐,快,全价)**:平台限流 RPM=100/TPM=10M,几十条也就一两分钟,不用排队:
 

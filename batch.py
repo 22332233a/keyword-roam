@@ -10,6 +10,11 @@
     python batch.py poll [--watch 300]                        # 查进度,到终态提示回填
     python batch.py ingest <batch_id>                         # 下结果→校验→并进 cache.json
 
+会话模型直生成(零 API 费,适合补几个词/烟测):出题文件给对话里的模型答卷,收卷校验与两条路同源。
+    python batch.py agent-prepare --mode basic --scope neighbors --limit 5
+    # 模型按 data/agent_in/todo-*.jsonl 里每条的 system+user 生成正文,写成答卷 jsonl({custom_id, content})
+    python batch.py agent-merge todo-xxx.jsonl 答卷.jsonl
+
 主题式铺图(漫游→深挖→详情,详情依赖前两轮的结果,必须等 ingest 完再发):
     python batch.py submit --mode basic --word A --word B    # 第一轮:这几棵树的漫游词
     python batch.py submit --mode deep  --word A --word B    # 第一轮:同一批词深挖
@@ -66,6 +71,7 @@ from app import (
 JOBS_FILE = BASE_DIR / "data" / "batch_jobs.json"
 IN_DIR = BASE_DIR / "data" / "batch_in"
 OUT_DIR = BASE_DIR / "data" / "batch_out"
+AGENT_DIR = BASE_DIR / "data" / "agent_in"
 
 BATCH_BASE = (os.environ.get("ROAM_BATCH_BASE_URL") or "").rstrip("/")
 if BATCH_BASE.endswith("/v1"):  # 抄来的 Base URL 常带 /v1,统一去掉,拼路径时再加
@@ -504,6 +510,68 @@ def cmd_ingest_file(args) -> None:
         print("       再拿去平台页面传一次即可(这次不用再挑词,文件里就是那几个没过关的)")
 
 
+def cmd_agent_prepare(args) -> None:
+    """会话模型直生成·出题:挑词+完整提示词写成本地文件,由对话里的模型答卷。
+    提示词仍走 build_prompt,和在线/批量同一套拼装,只是答卷人不换模型换人。"""
+    items, visited = [], list(load_cache().keys())
+    for m in (args.mode or ["detail"]):
+        got, visited = pick_targets(m, args.scope, args.word or [], args.limit, args.flavor)
+        items.extend(got)
+    if not items:
+        raise SystemExit("没有可生成的目标(该模式都齐了?换个 --scope 或用 --word 指定)")
+    AGENT_DIR.mkdir(parents=True, exist_ok=True)
+    todo = AGENT_DIR / f"todo-{time.strftime('%Y%m%d-%H%M%S')}.jsonl"
+    with todo.open("w", encoding="utf-8") as f:
+        for it in items:
+            system, user_msg, temperature = build_prompt(
+                it["word"], it["flavor"], visited, mode=it["mode"], ctx=it.get("ctx", "")
+            )
+            f.write(json.dumps({**it, "system": system, "user": user_msg}, ensure_ascii=False) + "\n")
+    print(f"出题 {len(items)} 条 → {todo.relative_to(BASE_DIR)}")
+    print("答卷人(对话里的模型)逐条按 system+user 生成正文,每行一条写进答卷文件:")
+    print('  {"custom_id": "basic-0", "content": "<按该条提示词生成的原文>"}')
+    print(f"然后收卷:python batch.py agent-merge {todo.name} <答卷文件路径>")
+
+
+def _agent_file(name: str) -> Path:
+    """出题文件:写全路径就用,只给文件名就到 data/agent_in/ 下找。"""
+    p = Path(name)
+    return p if p.exists() else AGENT_DIR / name
+
+
+def cmd_agent_merge(args) -> None:
+    """会话模型直生成·收卷:答卷逐条 parse→校验→并进缓存,不过的点名让答卷人重写。
+    与 _apply_output 同一套校验/合并,差别只在答卷格式(content 字段)和来源标记。"""
+    by_id = {rec["custom_id"]: rec for rec in _read_jsonl(_agent_file(args.todo))}
+    cache = load_cache()
+    ok = bad = 0
+    failed = []
+    for rec in _read_jsonl(_agent_file(args.answers)):
+        it = by_id.get(rec.get("custom_id"))
+        if it is None:
+            log_abnormal("Agent答卷对不上号", str(rec.get("custom_id"))[:40], "出题文件里没有这个 custom_id")
+            bad += 1
+            continue
+        try:
+            data_ = parse_llm_json((rec.get("content") or "").strip())
+            _validate(data_, it["mode"], it["word"], (rec.get("reasoning") or "").strip())
+        except (ValueError, AssertionError, json.JSONDecodeError) as e:
+            bad += 1
+            log_abnormal("Agent答卷校验不过", it["word"], str(e)[:200])
+            failed.append(f"{it['word']}({it['mode']}):{str(e)[:60]}")
+            continue
+        if it["mode"] == "basic":
+            data_["src"] = "agent"  # 标注来源是会话模型,前端暂不展示
+        merge_into_cache(cache, it["word"], it["mode"], data_, it.get("flavor") or DEFAULT_FLAVOR)
+        save_cache(cache)
+        ok += 1
+    print(f"收卷完成:成功 {ok} / 不过 {bad}")
+    if failed:
+        print("没过关的,重写 content 再收一轮:")
+        for f_ in failed:
+            print(f"  {f_}")
+
+
 def prewarm_one(item: dict, visited: list) -> tuple:
     """在线跑一个目标:call_llm 自带两层重掷(网络/JSON/校验),外面再加退避防限流。"""
     last: Exception = ValueError("未执行")
@@ -627,6 +695,22 @@ def main() -> None:
     p.add_argument("output", help="页面下载的成功结果文件")
     p.add_argument("--errors", default="", help="页面下载的错误文件(可选)")
     p.set_defaults(func=cmd_ingest_file)
+
+    p = sub.add_parser("agent-prepare", help="会话模型直生成·出题:挑词+提示词写成文件(零 API 费)")
+    p.add_argument("--mode", action="append", choices=("basic", "deep", "detail"),
+                   help="生成哪种数据;可重复,默认 detail")
+    p.add_argument("--scope", choices=("missing", "neighbors", "related"), default="missing",
+                   help="missing=缓存里缺该模式的词;neighbors=漫游图里没走过的词;"
+                        "related=--word 那几棵树里的每个词(配 --mode detail 用)")
+    p.add_argument("--word", action="append", help="指定词(可重复);给了就不看 scope")
+    p.add_argument("--limit", type=int, default=100, help="每个模式最多多少条,默认 100")
+    p.add_argument("--flavor", default="", help="口味偏好;缺省用缓存里该词的,再缺省用默认口味")
+    p.set_defaults(func=cmd_agent_prepare)
+
+    p = sub.add_parser("agent-merge", help="会话模型直生成·收卷:答卷校验→并进 cache.json")
+    p.add_argument("todo", help="agent-prepare 生成的出题文件名(在 data/agent_in/ 下)")
+    p.add_argument("answers", help="答卷 jsonl,每行 {custom_id, content}")
+    p.set_defaults(func=cmd_agent_merge)
 
     sub.add_parser("jobs", help="看本地任务记录").set_defaults(func=cmd_jobs)
 

@@ -112,9 +112,13 @@ python batch.py ingest <batch_id>                      # 下结果→校验→�
 
 | 文件 | 干什么 |
 |---|---|
-| `app.py` | Flask 后端:两个 API(`/api/expand` 漫游、`/api/cache` 足迹统计)+ 缓存 |
-| `templates/index.html` | 前端页面(原生 JS,无框架) |
-| `batch.py` | 缓存预热旁路工具:在线并发 `prewarm`(快)或离线批量 `submit/poll/ingest`(省) |
+| `app.py` | Flask 后端:全部路由(漫游/追问/对话/笔记/地图/导出/设置)+ 启动 |
+| `store.py` | 数据层:四份 JSON(cache/asks/notes/settings)与 abnormal.log 的读写、合并语义 |
+| `llm.py` | LLM 层:五套提示词、`chat()` 请求、JSON 解析、校验重掷、`build_prompt` 流水线 |
+| `templates/index.html` | 前端页面骨架(原生 JS,无框架) |
+| `static/js/` | 前端脚本(按功能拆分:state/common/roam/roamdata/detail/chat/note/map/footprint/selection/main/sidebar) |
+| `static/css/style.css` | 全部样式 |
+| `batch.py` | 缓存预热旁路工具:在线并发 `prewarm`(快)或离线批量 `submit/poll/ingest`(省)、会话模型直生成 `agent-prepare/agent-merge` |
 | `data/cache.json` | 关键词图缓存(运行后生成) |
 
 ## 可调参数(环境变量)

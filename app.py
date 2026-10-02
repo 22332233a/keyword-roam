@@ -444,6 +444,10 @@ def chat_api():
             answer = data.get("answer")
             assert isinstance(answer, str) and answer.strip(), "模型返回缺少 answer"
             assert len(answer) <= 350, f"回答超长({len(answer)}字)"
+            if not answer.rstrip().endswith(END_PUNCT):
+                # 与详情同款腰斩检测:思维链吃掉 max_tokens 预算时,正文会在半句话被掐
+                log_abnormal("对话疑似腰斩", f"{word}::{q[:30]}", f"结尾:{answer[-40:]!r}")
+                raise ValueError("回答话说一半,重掷一次")
             break
         except (requests.RequestException, json.JSONDecodeError, AssertionError, ValueError) as e:
             last_err = e

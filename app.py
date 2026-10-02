@@ -112,6 +112,7 @@ def save_asks(asks: dict) -> None:
 
 
 LOG_FILE = BASE_DIR / "data" / "abnormal.log"
+SETTINGS_FILE = BASE_DIR / "data" / "settings.json"
 END_PUNCT = tuple("。！？…～」』）)】!?\"'")   # 正文/详情正常收尾的标点
 
 
@@ -125,6 +126,39 @@ def log_abnormal(kind: str, who: str, detail: str = "") -> None:
     with _LOG_LOCK:
         with LOG_FILE.open("a", encoding="utf-8") as f:
             f.write(f"[{stamp}] {kind} | {who} | {detail}\n")
+
+
+# ===== ⚙ 用户设置(data/settings.json,单机个人化):详情长度/放飞程度/口味预设 =====
+DEFAULT_SETTINGS = {"detail_len": "标准", "temp_style": "标准", "flavors": []}
+DETAIL_LEN_CHARS = {"短": 80, "标准": 150, "长": 300}    # 详情提示词的目标字数
+DETAIL_CAP_CHARS = {"短": 160, "标准": 300, "长": 460}   # 校验硬上限,给发挥留余量
+TEMP_ROAM = {"稳": 0.8, "标准": 1.1, "抽风": 1.5}        # 漫游求惊喜,幅度大
+TEMP_DETAIL = {"稳": 0.5, "标准": 0.7, "抽风": 1.0}      # 详情求准,整体压低
+
+
+def load_settings() -> dict:
+    """读用户设置;缺失/损坏/非法值一律落回默认——设置坏了不该连累漫游。"""
+    s = dict(DEFAULT_SETTINGS)
+    if SETTINGS_FILE.exists():
+        try:
+            saved = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
+            if isinstance(saved, dict):
+                s.update({k: saved[k] for k in DEFAULT_SETTINGS if k in saved})
+        except json.JSONDecodeError:
+            log_abnormal("settings.json 解析失败", "落回默认设置")
+    if s["detail_len"] not in DETAIL_LEN_CHARS:
+        s["detail_len"] = "标准"
+    if s["temp_style"] not in TEMP_ROAM:
+        s["temp_style"] = "标准"
+    if not isinstance(s["flavors"], list):
+        s["flavors"] = []
+    s["flavors"] = [str(f).strip()[:60] for f in s["flavors"] if str(f).strip()][:20]
+    return s
+
+
+def save_settings(s: dict) -> None:
+    SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SETTINGS_FILE.write_text(json.dumps(s, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def parse_llm_json(text: str) -> dict:
@@ -213,7 +247,8 @@ def _validate(data: dict, mode: str, word: str, reasoning: str) -> None:
         data["thinking"] = reasoning  # 深挖把思维链一起存下来,前端可单独查看
     else:  # detail
         assert isinstance(data.get("detail"), str) and data["detail"].strip(), "模型返回缺少 detail"
-        assert len(data["detail"]) <= 300, f"解释超长({len(data['detail'])}字)"
+        cap = DETAIL_CAP_CHARS[load_settings()["detail_len"]]
+        assert len(data["detail"]) <= cap, f"解释超长({len(data['detail'])}字)"
         if not data["detail"].rstrip().endswith(END_PUNCT):
             # 句子结尾不是句号类标点:多半是话说一半(预算截断或模型自己断片)
             log_abnormal("详情疑似腰斩", word, f"结尾:{data['detail'][-60:]!r}")
@@ -227,8 +262,12 @@ def build_prompt(word: str, flavor: str, visited: list[str], mode: str = "basic"
     user_msg = f"关键词:{word}\n口味偏好:{flavor}\n已访问过(不要重复推荐):{visited_text}"
     if ctx:
         user_msg += f"\n它出自的介绍片段:{ctx}"
-    system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT, "detail": DETAIL_SYSTEM_PROMPT}[mode]
-    temperature = 0.7 if mode == "detail" else 1.1  # 详情/追问求准,漫游求惊喜
+    s = load_settings()
+    system = {"basic": SYSTEM_PROMPT, "deep": DEEP_SYSTEM_PROMPT,
+              # 详情长度是用户设置:模板里的"150字"按档位替换(校验上限 DETAIL_CAP_CHARS 同步放宽)
+              "detail": DETAIL_SYSTEM_PROMPT.replace("150", str(DETAIL_LEN_CHARS[s["detail_len"]]))}[mode]
+    temp_map = TEMP_DETAIL if mode == "detail" else TEMP_ROAM
+    temperature = temp_map[s["temp_style"]]  # 详情/追问求准,漫游求惊喜;幅度档位用户可调
     return system, user_msg, temperature
 
 
@@ -412,6 +451,30 @@ def chat_api():
         asks[key] = entry
         save_asks(asks)
     return jsonify({"cached": False, "data": entry})
+
+
+@app.route("/api/settings", methods=["GET", "POST"])
+def settings_api():
+    """⚙设置面板读写。即改即生效(下一次生成起),缓存里的旧数据不动。
+    POST 部分更新:只校验并落盘传来的键,没传的保持原样。"""
+    if request.method == "GET":
+        return jsonify(load_settings())
+    body = request.get_json(silent=True) or {}
+    s = load_settings()
+    if "detail_len" in body:
+        if body["detail_len"] not in DETAIL_LEN_CHARS:
+            return jsonify({"error": "detail_len 只能是 短/标准/长"}), 400
+        s["detail_len"] = body["detail_len"]
+    if "temp_style" in body:
+        if body["temp_style"] not in TEMP_ROAM:
+            return jsonify({"error": "temp_style 只能是 稳/标准/抽风"}), 400
+        s["temp_style"] = body["temp_style"]
+    if "flavors" in body:
+        if not isinstance(body["flavors"], list):
+            return jsonify({"error": "flavors 要是字符串列表"}), 400
+        s["flavors"] = [str(f).strip()[:60] for f in body["flavors"] if str(f).strip()][:20]
+    save_settings(s)
+    return jsonify(s)
 
 
 @app.route("/api/graph")

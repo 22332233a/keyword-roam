@@ -13,6 +13,7 @@
     <input id="word-input" placeholder="输入一个词,开始漫游…">
     <input id="flavor-input" value="{{ default_flavor }}" title="口味偏好">
     <button onclick="roamFromInput()">漫游</button>
+    <button onclick="openSettings()" title="口味预设/详情长度/放飞程度">⚙ 设置</button>
     <button onclick="toggleMap()" title="把足迹画成词图,可找两词最短路径">🗺 地图</button>
   </header>
 
@@ -56,6 +57,40 @@
     <canvas id="map-canvas"></canvas>
   </div>
 
+  <div id="settings-view" hidden>
+    <div id="settings-panel">
+      <b>⚙ 设置</b>
+      <div class="set-group">
+        <label>口味预设<span class="set-note">点选填入漫游框;自己存的可以 × 掉</span></label>
+        <div id="flavor-chips"></div>
+        <div class="set-row">
+          <input id="flavor-new" placeholder="输入你的常用口味,存成预设…">
+          <button onclick="addFlavorPreset()">存预设</button>
+        </div>
+      </div>
+      <div class="set-group">
+        <label>详情长度<span class="set-note">📖详情的目标字数,下一次生成起生效</span></label>
+        <div class="seg" id="seg-detail-len">
+          <span data-v="短" onclick="setDetailLen(this)">短(80字)</span>
+          <span data-v="标准" onclick="setDetailLen(this)">标准(150字)</span>
+          <span data-v="长" onclick="setDetailLen(this)">长(300字)</span>
+        </div>
+      </div>
+      <div class="set-group">
+        <label>放飞程度<span class="set-note">漫游/详情的温度:稳=少惊喜,抽风=容易撞见怪东西</span></label>
+        <div class="seg" id="seg-temp">
+          <span data-v="稳" onclick="setTempStyle(this)">稳</span>
+          <span data-v="标准" onclick="setTempStyle(this)">标准</span>
+          <span data-v="抽风" onclick="setTempStyle(this)">抽风</span>
+        </div>
+      </div>
+      <div id="settings-foot">
+        <span id="settings-msg"></span>
+        <span id="settings-close" onclick="closeSettings()">✕ 关闭</span>
+      </div>
+    </div>
+  </div>
+
   <div id="sel-menu" hidden>
     <div class="sel-close" onclick="hideSel()">✕</div>
     <div class="sel-term" id="sel-term"></div>
@@ -77,6 +112,7 @@
   <script src="/static/js/footprint.js"></script>
   <script src="/static/js/selection.js"></script>
   <script src="/static/js/main.js"></script>
+  <script src="/static/js/settings.js"></script>
 </body>
 
 </html>

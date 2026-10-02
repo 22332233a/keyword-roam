@@ -560,3 +560,71 @@
     }
 
   
+  /* ===== ⚙ 设置面板 ===== */
+  #settings-view {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 12, 17, .72);
+    z-index: 160;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  #settings-panel {
+    margin-top: 8vh;
+    width: min(560px, 92vw);
+    max-height: 82vh;
+    overflow: auto;
+    background: #1c1f28;
+    border: 1px solid #2a2e3a;
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-size: 13px;
+    color: #b8bdc9;
+  }
+
+  #settings-panel > b { color: #d8dce6; font-size: 14px; }
+
+  .set-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #d8dce6;
+  }
+
+  .set-note { font-weight: normal; color: #6a6f7c; margin-left: 8px; font-size: 12px; }
+
+  #flavor-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+
+  .fchip { cursor: pointer; }
+  .fchip:hover { border-color: #4a7dff; }
+
+  .fx { color: #6a6f7c; margin-left: 3px; font-weight: bold; }
+  .fx:hover { color: #e06c75; }
+
+  .set-row { display: flex; gap: 6px; }
+  .set-row input { flex: 1; }
+
+  .seg { display: flex; gap: 6px; }
+
+  .seg span {
+    padding: 4px 14px;
+    background: #232734;
+    border: 1px solid #3a3f4e;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #b8bdc9;
+  }
+
+  .seg span:hover { border-color: #4a7dff; }
+  .seg span.active { background: #ffb454; color: #12141a; border-color: #ffb454; }
+
+  #settings-foot { display: flex; align-items: center; gap: 10px; }
+  #settings-msg { color: #7ec97e; }
+  #settings-close { margin-left: auto; cursor: pointer; color: #6a6f7c; }
+  #settings-close:hover { color: #e06c75; }

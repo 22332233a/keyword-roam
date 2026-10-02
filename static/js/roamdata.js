@@ -103,10 +103,12 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
         : `完成 ${done}/${todo.length}` + (failed.length ? ` · 失败:${failed.join("、")}` : " · 全部成功 ✓");
     }
 
-    /* 深挖页的 📚:打开漫游结果面板(里面有进度条),只跑深挖维度的词 */
+    /* 深挖页的 📚:首点=开面板只跑深挖维度的词,再点=折叠(后台任务不受影响) */
     async function fillFromDeep() {
       const box = document.getElementById("center-roamdata");
-      if (box && box.hidden) await roamData();
+      if (!box) return;
+      if (!box.hidden) { box.hidden = true; return; }
+      await roamData();
       fillTreeDetails(true);
     }
 

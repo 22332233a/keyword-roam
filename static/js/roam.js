@@ -59,12 +59,14 @@ async function roam(word) { await go(word, "basic"); }
        <button class="deep-btn lg" onclick="toggleDetail('${w}')">📖详情</button>
        <button class="deep-btn lg" onclick="roamData()">🧭漫游结果</button>
        <button class="deep-btn lg" onclick="toggleChat()">💬对话</button>
+       <button class="deep-btn lg" onclick="toggleNote()">📝笔记</button>
        <button class="deep-btn lg" onclick="rerollWord()" title="清掉这个词当前页模式(漫游/深挖)的缓存,花钱重新生成">🎲重掷</button>
      </div>
      <div class="detail-box" id="center-detail" hidden></div>
      <div class="detail-box think-box" id="center-think" hidden></div>
      <div class="detail-box" id="center-roamdata" hidden></div>
-     <div class="detail-box chat-box" id="center-chat" hidden></div>`;
+     <div class="detail-box chat-box" id="center-chat" hidden></div>
+     <div class="detail-box note-box" id="center-note" hidden></div>`;
     }
 
     /* 普通漫游:左栏固定三组 */

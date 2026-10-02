@@ -670,3 +670,22 @@
   #tree-fill-btn:hover { border-color: #4a7dff; }
 
   #tree-fill-progress { color: #8a8f9c; font-size: 12px; }
+
+  /* ===== 📝 笔记 ===== */
+  #center-note textarea {
+    display: block;
+    width: 100%;
+    min-height: 120px;
+    background: #171a22;
+    border: 1px solid #2a2e3a;
+    border-radius: 6px;
+    color: #d8dce6;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 8px;
+    resize: vertical;
+    margin-top: 6px;
+  }
+
+  #center-note b { color: #d8dce6; }
+  .note-status { display: block; font-size: 11px; color: #6a6f7c; margin-top: 4px; }

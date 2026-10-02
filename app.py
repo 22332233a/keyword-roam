@@ -111,8 +111,22 @@ def save_asks(asks: dict) -> None:
     )
 
 
+def load_notes() -> dict:
+    if NOTES_FILE.exists():
+        return json.loads(NOTES_FILE.read_text(encoding="utf-8"))
+    return {}
+
+
+def save_notes(notes: dict) -> None:
+    NOTES_FILE.parent.mkdir(parents=True, exist_ok=True)
+    NOTES_FILE.write_text(
+        json.dumps(notes, ensure_ascii=False, indent=1), encoding="utf-8"
+    )
+
+
 LOG_FILE = BASE_DIR / "data" / "abnormal.log"
 SETTINGS_FILE = BASE_DIR / "data" / "settings.json"
+NOTES_FILE = BASE_DIR / "data" / "notes.json"
 END_PUNCT = tuple("。！？…～」』）)】!?\"'")   # 正文/详情正常收尾的标点
 
 
@@ -473,6 +487,27 @@ def chat_api():
     return jsonify({"cached": False, "data": entry})
 
 
+@app.route("/api/note", methods=["GET", "POST"])
+def note_api():
+    """📝绑在词上的手写笔记:一词一条,自动保存,重启不丢(data/notes.json)。
+    POST 清空文本 = 删除该词的笔记,不留空条目。"""
+    if request.method == "GET":
+        word = request.args.get("word", "").strip()
+        return jsonify({"text": (load_notes().get(word) or {}).get("text", "")})
+    body = request.get_json(silent=True) or {}
+    word = str(body.get("word") or "").strip()[:30]
+    text = str(body.get("text") or "")[:5000]
+    if not word:
+        return jsonify({"error": "缺少 word 参数"}), 400
+    notes = load_notes()
+    if text.strip():
+        notes[word] = {"text": text, "time": int(time.time())}
+    else:
+        notes.pop(word, None)
+    save_notes(notes)
+    return jsonify({"ok": True, "empty": not text.strip()})
+
+
 @app.route("/api/tree-words")
 def tree_words():
     """📚一键补详情的原料:这个词的漫游树+深挖树里出现过的词(去重),
@@ -511,6 +546,7 @@ def export_data():
     fmt = request.args.get("format", "json")
     stamp = time.strftime("%Y%m%d-%H%M%S")
     cache = load_cache()
+    notes = load_notes()
     if fmt == "md":
         lines = [
             "# 关键词漫游足迹",
@@ -530,6 +566,8 @@ def export_data():
                         for it in items))
             if d.get("detail"):
                 lines.append(f"- **📖 详情**:{d['detail']}")
+            if w in notes and notes[w].get("text", "").strip():
+                lines.append(f"- **📝 笔记**:{notes[w]['text'].strip()}")
             for dim in (d.get("deep") or {}).get("dimensions") or []:
                 its = dim.get("items") or []
                 if its:
@@ -546,7 +584,7 @@ def export_data():
             md, mimetype="text/markdown; charset=utf-8",
             headers={"Content-Disposition": f"attachment; filename=roam-footprint-{stamp}.md"},
         )
-    payload = {"exported_at": int(time.time()), "format": "roam-backup-v1", "cache": cache, "asks": load_asks()}
+    payload = {"exported_at": int(time.time()), "format": "roam-backup-v1", "cache": cache, "asks": load_asks(), "notes": notes}
     return Response(
         json.dumps(payload, ensure_ascii=False, indent=1), mimetype="application/json",
         headers={"Content-Disposition": f"attachment; filename=roam-backup-{stamp}.json"},

@@ -344,11 +344,19 @@
       margin-bottom: 6px;
     }
 
-    .r-item .rrow {
+    .r-item .rbtns {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
+      background: #20232e;
+      border: 1px solid #2a2e3a;
+      border-radius: 6px;
+      padding: 3px 10px;
+      margin-top: 5px;
     }
+
+    .r-item .rbtns .rb { margin-left: 0; }  /* 盒子里均匀分布,不用老的右推 */
 
     .r-item .rw {
       cursor: pointer;

@@ -25,8 +25,8 @@ const roamDataMem = new Map();   // word -> 漫游结果数据(会话内,免得�
         const seen = visited.has(it.word) ? " seen" : "";
         const w = esc(it.word).replace(/'/g, "\\'");
         return `<div class="r-item${seen}">
-      <div class="rrow">
-        <span class="rw" onclick="goWord('${w}')">${esc(it.word)}</span>
+      <div class="rw" onclick="goWord('${w}')">${esc(it.word)}</div>
+      <div class="rbtns">
         <button class="mini" onclick="roamDeep('${w}')" title="深挖这个词">🔍</button>
         <a class="rb" href="https://search.bilibili.com/all?keyword=${encodeURIComponent(it.word)}" target="_blank" title="去B站搜这个词">B站▶</a>
         <button class="mini" onclick="blacklistWord('${w}')" title="拉黑:以后永不推荐这个词">🚫</button>

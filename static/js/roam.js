@@ -68,16 +68,21 @@ async function roam(word) { await go(word, "basic"); }
       refreshNoteDock();   // 笔记左栏常驻:换词就换标题+拉该词的笔记
     }
 
-    /* 普通漫游:主区自动展开 🧭漫游结果(分组卡片) */
+    /* 普通漫游:左栏固定三组 + 主区展开 🧭漫游结果 */
     function renderBasic(d, cached) {
       currentViewMode = "basic";
       currentThinking = "";
       renderCenter(d.word, (cached ? "✓ 漫游过,读的缓存" : "✨ 新大陆"));
+      renderGroups([
+        { title: "⬆ 上级分类", items: d.parents },
+        { title: "⬇ 下级分类", items: d.children },
+        { title: "↔ 相邻词(点词继续漫游)", items: d.similar },
+      ]);
       roamDataMem.delete(currentWord);   // 重掷后缓存数据可能变了,清掉会话内旧副本
       openRoamData();
     }
 
-    /* 深挖:按类型动态生成的维度进 🧭漫游结果盒的深挖区,🧠思考过程在按钮行 */
+    /* 深挖:按类型动态生成的维度进左栏 + 主区 🧭漫游结果盒的深挖区 */
     let currentThinking = "";
 
     function renderDeep(d, cached) {
@@ -89,6 +94,9 @@ async function roam(word) { await go(word, "basic"); }
         document.querySelector("#center .center-actions").innerHTML +=
           `<button class="deep-btn sm" onclick="toggleThinking()" title="看本次深挖的思维链">🧠</button>`;
       }
+      renderGroups(
+        (d.dimensions ?? []).map(dim => ({ title: "◈ " + (dim.name ?? ""), items: dim.items }))
+      );
       roamDataMem.delete(currentWord);
       openRoamData();
     }

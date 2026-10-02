@@ -56,5 +56,9 @@
       if (!box.hidden && box.dataset.owner === word) { box.hidden = true; return; }
       showDetail(word, false);
     }
+    /* 左栏词条的📖:右栏详情框展示该词 */
+    function sideDetail(word) {
+      showDetail(word, false);
+    }
 
     

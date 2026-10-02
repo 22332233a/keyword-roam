@@ -688,7 +688,7 @@
   #note-input {
     display: block;
     width: 100%;
-    min-height: 300px;
+    min-height: 140px;
     background: #171a22;
     border: 1px solid #2a2e3a;
     border-radius: 6px;
@@ -701,11 +701,6 @@
   }
 
   .note-status { display: block; font-size: 11px; color: #6a6f7c; margin-top: 4px; }
-
-  #sidebar.collapsed { width: 40px; cursor: pointer; }
-  #sidebar.collapsed #note-title,
-  #sidebar.collapsed #note-input,
-  #sidebar.collapsed .note-status { visibility: hidden; }
 
   /* ===== 💬 对话底栏(常驻工作区,默认收起) ===== */
   #center-chat {

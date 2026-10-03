@@ -1,6 +1,6 @@
 ---
 name: keyword-roam-prewarm
-description: 关键词漫游器(keyword-roam)的缓存预热、批量回填与数据排障。当用户要求"预热缓存/铺图/补详情/把漫游图往外扩/回填批量结果/查批量任务"，或要排查 data/cache.json、data/abnormal.log 里的数据问题时使用——即使没说"预热"两个字。
+description: 关键词漫游器(keyword-roam)的缓存预热（走 API）、批量回填与数据排障。当用户要求"预热缓存/铺图/补详情/把漫游图往外扩/回填批量结果/查批量任务"，或要排查 data/cache.json、data/abnormal.log 里的数据问题时使用——即使没说"预热"两个字。注：这里都是打 API 的路径；要零成本、由当前会话模型直接生成，用 keyword-roam-session-gen。
 ---
 
 # keyword-roam 预热与回填运维
@@ -37,30 +37,14 @@ python batch.py prewarm --mode basic --mode deep --word 词 --word 词  # 指定
 - 预热结果 `data["src"]="prewarm"`，前端暂不展示该标记，但别删——区分来源有用。
 - 校验不过会自动重掷一次，再不过就放弃并写 `data/abnormal.log`，不是错误，是设计。
 
-## 会话模型直生成（零 API 费，你自己当生成器）
+## 会话模型直生成（零 API 费）→ 见 `keyword-roam-session-gen` 技能
 
-小批量补词（≤10 条）或烟测时首选这条：跳过 MiMo API，由当前会话的模型直接答卷。
+要走"由当前会话的模型直接答卷、不打 API"这条路（漫游 / 深挖 / 某棵树补详情），
+**完整流程在 `keyword-roam-session-gen` 技能里**——三类目标的命令、答卷规范、分片与失败重收都在那边，
+这里不再重复维护，免得两处各自走样。
 
-```bash
-python batch.py agent-prepare --mode basic --scope neighbors --limit 5
-```
-
-然后你（会话模型）就是答卷人，流程：
-
-1. 读 `data/agent_in/todo-*.jsonl`，**逐条**按其 `system`+`user` 字段生成正文——
-   那就是该词的真实提示词（已带口味偏好、已访问词表、上下文片段），不要自己重新发明格式；
-2. 每行 `{"custom_id": "basic-0", "content": "<按该条提示词生成的原文>"}` 写进同目录答卷文件；
-   注意校验下限要满足（parents≥1/children≥3/similar≥5，similar 里至少 2 个跨领域词，
-   note≤15 字），一次生成 3~5 条是质量上限，多了注意力会摊薄；
-3. 收卷：`python batch.py agent-merge todo-xxx.jsonl 答卷.jsonl`（文件名不给路径会自动到
-   `data/agent_in/` 下找）。不过关的词会点名打印，重写 content 再收一轮；
-4. 你写的内容也会被原样校验——parse_llm_json 容忍代码围栏，但格式和数量底线不豁免；
-   正文里的引号用「」（ASCII 双引号会打断答卷本身的 JSON，校验会以语法错误打回）。
-5. 两个坑：`--word` 是跨 `--mode` 全局的（argparse 只有一个 --word 列表），要给不同模式
-   指定不同词就分开跑几次 `agent-prepare`；连跑两次出题文件名会带模式标签防覆盖
-   （todo-<时间戳>-<模式>.jsonl），别当成两个一样的文件。
-
-十几个词以上别用这条（上下文越滚越贵），改走 prewarm 在线并发。
+一句话概览：`python batch.py agent-prepare …` 出题 → 会话模型按 todo 的 system+user 生成 content →
+`python batch.py agent-merge todo.jsonl 答卷.jsonl` 收卷校验并入缓存。十几个词以上再考虑走上面的 prewarm。
 
 ## 离线批量（submit/poll/ingest）：只在用户开口时用
 

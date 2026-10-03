@@ -12,3 +12,15 @@ data/agent_in/
 
 # 运行时异常日志(诊断用,不是足迹)
 data/abnormal.log
+
+# 个人运行时数据(本机足迹/追问缓存/笔记/设置/随手截图,不进版本库)
+# 注意:data/demo.jsonl 是批量接口的结构模板,文档引用它,刻意保留跟踪
+data/cache.json
+data/asks.json
+data/notes.json
+data/settings.json
+data/*.png
+
+# Qoder/ZCode 本机工具产物(计划文件 + 工具自带的忽略配置,不进版本库)
+.zcode/
+.zcodeignore

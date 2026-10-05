@@ -159,6 +159,10 @@ node tests/js/run_frontend_tests.mjs        # 前端  30 条
 | `tests/test_detail_failguard.py` | 「生成不出的词不再反复烧钱」端到端(走真实 HTTP 端点) |
 | `tests/js/run_frontend_tests.mjs` | 自动补详情的入队判据、失败退避、进度口径、并发闸门 |
 
+## 架构
+
+每个文件是谁、一次漫游的十二站旅程、改代码不能破的不变量——见 [ARCHITECTURE.md](ARCHITECTURE.md)。
+
 ## 文件
 
 | 文件 | 干什么 |

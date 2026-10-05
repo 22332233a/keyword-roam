@@ -1,5 +1,5 @@
 /* ===== 左栏:📝笔记(上) + 按分类分组的词列表(下) =====
-       词卡点词=跟随当前模式,🔍=深挖,📖=右栏看详情;足迹变化由 refreshSeen 同步"去过"色 */
+       词卡点词=漫游,🔍=深挖,📖=看详情;足迹变化由 refreshSeen 同步"去过"色 */
     function sideItem(it, id) {
       const seen = visited.has(it.word) ? " seen" : "";
       const w = esc(it.word).replace(/'/g, "\\'");

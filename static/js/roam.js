@@ -2,8 +2,9 @@ async function roam(word) { await go(word, "basic"); }
     async function roamDeep(word) { await go(word, "deep"); }
     /* 🎲单词重掷:无视缓存重新生成当前页模式的词;详情另有 🔄重写,黑名单在设置面板 */
     async function rerollWord() { await go(currentWord, currentViewMode, true); }
-    /* 按当前页面模式打开一个词:深挖页里点击=深挖,漫游页里点击=漫游 */
-    function goWord(word) { go(word, currentViewMode); }
+    /* 点词永远=漫游(2026-10-02 定稿:消除歧义,深挖只属于 🔍 按钮);
+       currentViewMode 仅剩 🎲重掷在用(重掷跟随当前页模式) */
+    function goWord(word) { go(word, "basic"); }
 
     /* 足迹点击:优先吃缓存——词有什么数据就开什么(分类筛选激活且词有对应数据时按分类跳,
        否则按 深挖>漫游>详情 的富度优先),什么都没有才按当前页面模式去生成 */
@@ -42,6 +43,14 @@ async function roam(word) { await go(word, "basic"); }
         else renderDeep(d, body.cached);
         renderChips();
         refreshSeen();
+        // 自动补详情只在"新漫游出结果"时触发,而且等盒子渲染完再入队。
+        // 挂在这里而不是 renderRoamData 里:那个函数每次展开盒子(包括你点「漫游结果」、
+        // 包括刷新后重画)都会被调用,挂在那儿会导致每点一次就重跑一批补详情。
+        if (mode === "basic") {
+          // 这次漫游的数据直接交给盒子渲染并返回,不再重入 roamData()
+          const roamTree = await openRoamData(true, d);
+          if (roamTree) autoDetailFromRoam(roamTree);
+        }
         status.textContent = "";
       } catch (err) {
         status.textContent = "出错:" + err.message;

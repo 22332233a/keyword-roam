@@ -1,0 +1,28 @@
+# GitHub Actions 持续集成:每次 push 自动在干净的 Ubuntu 虚拟机上重跑全部测试。
+# 防的是"在我机器上是好的":本地缓存旧依赖、忘了提交新文件,到这里全现形。
+# 查看入口:仓库页 Actions 标签;提交列表里每条 commit 后面的 ✓/✗ 就是结果。
+name: CI
+
+# 触发时机:推送和 PR 都跑(以后有协作者或 fork 提 PR 时自动覆盖)
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest          # GitHub 免费提供的临时虚拟机,跑完即销毁
+
+    steps:
+      # 把仓库代码拉到虚拟机上
+      - uses: actions/checkout@v4
+
+      # 后端:Python 3.11(与本地一致)+ 装依赖(项目仅 flask/requests 两个第三方包)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install flask requests
+      - run: python -m unittest discover -s tests -v
+
+      # 前端:Node 22 跑假 DOM 逻辑测试(纯标准库,无需 npm install)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node tests/js/run_frontend_tests.mjs

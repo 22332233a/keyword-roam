@@ -51,13 +51,10 @@ from pathlib import Path
 
 import requests
 
+from llm import missing_key_hint as missing_hint
 from app import (
-    API_KEY,
-    API_URL,
     BASE_DIR,
     DEFAULT_FLAVOR,
-    MAX_TOKENS,
-    MODEL,
     _validate,
     build_prompt,
     call_llm,
@@ -65,6 +62,7 @@ from app import (
     log_abnormal,
     merge_into_cache,
     parse_llm_json,
+    resolve_api_config,   # 端点/key/模型跟着 ⚙设置走(环境变量兜底),不再从 app 取旧常量
     save_cache,
 )
 
@@ -76,7 +74,6 @@ AGENT_DIR = BASE_DIR / "data" / "agent_in"
 BATCH_BASE = (os.environ.get("ROAM_BATCH_BASE_URL") or "").rstrip("/")
 if BATCH_BASE.endswith("/v1"):  # 抄来的 Base URL 常带 /v1,统一去掉,拼路径时再加
     BATCH_BASE = BATCH_BASE[:-3]
-BATCH_KEY = API_KEY
 
 ENDPOINT = "/v1/chat/completions"
 TERMINAL = ("completed", "failed", "cancelled", "expired")
@@ -104,15 +101,15 @@ def _need_base() -> None:
             "未设置 ROAM_BATCH_BASE_URL(批量推理页面的 Base URL),"
             "形如 https://batch-api-<region>.xiaomimimo.com"
         )
-    if not BATCH_KEY:
-        raise SystemExit("未设置 LLM_API_KEY(或 DEEPSEEK_API_KEY)")
+    if not resolve_api_config()["api_key"]:
+        raise SystemExit("未配置 API Key:到 ⚙设置 →「模型接口」填,或设 LLM_API_KEY / DEEPSEEK_API_KEY")
 
 
 def _req(method: str, path: str, timeout: int = 120, **kw):
     r = requests.request(
         method,
         BATCH_BASE + path,
-        headers={"Authorization": f"Bearer {BATCH_KEY}"},
+        headers={"Authorization": f"Bearer {resolve_api_config()['api_key']}"},
         timeout=timeout,
         **kw,
     )
@@ -206,19 +203,20 @@ def build_line(item: dict, visited: list) -> dict:
     system, user_msg, temperature = build_prompt(
         item["word"], item["flavor"], visited, mode=item["mode"], ctx=item.get("ctx", "")
     )
+    cfg = resolve_api_config()   # 模型/上限跟着 ⚙设置走,与在线请求同一口径
     return {
         "custom_id": item["custom_id"],
         "method": "POST",
         "url": ENDPOINT,
         "body": {
-            "model": MODEL,
+            "model": cfg["model"],
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_msg},
             ],
             "response_format": {"type": "json_object"},
             "temperature": temperature,
-            "max_tokens": MAX_TOKENS,
+            "max_tokens": cfg["max_tokens"],
         },
     }
 
@@ -591,35 +589,18 @@ def prewarm_one(item: dict, visited: list) -> tuple:
     return None, last
 
 
-def cmd_prewarm(args) -> None:
-    """在线并发预热:与在线请求同一出口(app.call_llm),线程池并发,合并进缓存。"""
-    if not API_KEY and "deepseek.com" in API_URL:
-        raise SystemExit("未设置 LLM_API_KEY(或 DEEPSEEK_API_KEY),在线预热要用")
-    modes = args.mode or ["detail"]
-    items, visited = [], []
-    for m in modes:
-        got, visited = pick_targets(m, args.scope, args.word or [], args.limit, args.flavor)
-        items.extend(got)
-    if not items:
-        raise SystemExit("没有可预热的目标(缓存里该模式都齐了?)")
-    if args.dry_run:
-        print(f"将在线并发生成 {len(items)} 条(并发 {args.concurrency}):")
-        for it in items[:10]:
-            print(f"  [{it['mode']}] {it['word']}" + (f"  ← {it['ctx']}" if it.get("ctx") else ""))
-        if len(items) > 10:
-            print(f"  …共 {len(items)} 条")
-        return
-
+def _run_prewarm_batch(items: list, visited: list, concurrency: int) -> tuple:
+    """并发跑一批在线生成,边成功边并进缓存。返回 (成功数, 总数)。"""
     cache = load_cache()
     lock = threading.Lock()   # 合并+落盘串行,请求本身并发
     t0, done, ok = time.time(), 0, 0
-    print(f"在线预热 {len(items)} 条,并发 {args.concurrency}(平台限流 RPM=100/TPM=10M,429 自动退避)…")
+    print(f"在线预热 {len(items)} 条,并发 {concurrency}(平台限流 RPM=100/TPM=10M,429 自动退避)…")
 
     def work(it):
         data, err = prewarm_one(it, visited)
         return it, data, err
 
-    with ThreadPoolExecutor(max_workers=args.concurrency) as ex:
+    with ThreadPoolExecutor(max_workers=concurrency) as ex:
         for fut in as_completed([ex.submit(work, it) for it in items]):
             it, data, err = fut.result()
             with lock:
@@ -636,9 +617,35 @@ def cmd_prewarm(args) -> None:
                     print(f"  ✗ {done}/{len(items)} [{it['mode']}] {it['word']}:{str(err)[:80]}")
 
     rate = done / max((time.time() - t0) / 60, 1e-9)
-    print(f"\n预热完成:成功 {ok}/{len(items)},实际速率约 {rate:.0f} 条/分钟(限流 100),已并入缓存")
-    if ok < len(items):
-        print(f"失败 {len(items) - ok} 条已留痕 abnormal.log;重跑同一句即可——按 scope 挑词只挑还缺的,已成功的不会重跑")
+    print(f"  本批完成:成功 {ok}/{len(items)},速率约 {rate:.0f} 条/分钟")
+    return ok, len(items)
+
+
+def cmd_prewarm(args) -> None:
+    """在线并发预热:与在线请求同一出口(app.call_llm),线程池并发,合并进缓存。"""
+    _miss = missing_hint(resolve_api_config())
+    if _miss:
+        raise SystemExit(f"{_miss}(在线预热要用)")
+    modes = args.mode or ["detail"]
+    items, visited = [], []
+    for m in modes:
+        got, visited = pick_targets(m, args.scope, args.word or [], args.limit, args.flavor)
+        items.extend(got)
+    if not items:
+        raise SystemExit("没有可预热的目标(缓存里该模式都齐了?)")
+    if args.dry_run:
+        print(f"将在线并发生成 {len(items)} 条(并发 {args.concurrency}):")
+        for it in items[:10]:
+            print(f"  [{it['mode']}] {it['word']}" + (f"  ← {it['ctx']}" if it.get("ctx") else ""))
+        if len(items) > 10:
+            print(f"  …共 {len(items)} 条")
+        return
+
+    ok, total = _run_prewarm_batch(items, visited, args.concurrency)
+
+    print(f"\n预热完成:成功 {ok}/{total},已并入缓存")
+    if ok < total:
+        print(f"失败 {total - ok} 条已留痕 abnormal.log;重跑同一句即可——按 scope 挑词只挑还缺的,已成功的不会重跑")
 
 
 def cmd_jobs(_args) -> None:

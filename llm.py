@@ -6,6 +6,7 @@
 """
 import json
 import os
+import re
 import time
 
 import requests
@@ -20,12 +21,48 @@ from store import (
 )
 
 # 万能插座:任何 OpenAI 兼容端点都能接(Ollama 填 http://localhost:11434/v1 即可)
-LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com").rstrip("/")
-API_URL = LLM_BASE_URL + "/chat/completions"
-# key/模型名:通用名 LLM_* 优先,没设则回退到旧名 DEEPSEEK_*(兼容存量配置)
-API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("DEEPSEEK_API_KEY", "")
-MODEL = os.environ.get("LLM_MODEL") or os.environ.get("DEEPSEEK_MODEL", "deepseek-flash")  # 漫游要快和便宜,flash 够用
-MAX_TOKENS = int(os.environ.get("ROAM_MAX_TOKENS", "8000"))  # 思维链+正文共用,大词(如微软)思考就得上千 token
+#
+# 解析优先级(每次请求时解析,所以 ⚙设置改完即时生效):
+#   ⚙设置里的「模型接口」 → 环境变量(LLM_*/DEEPSEEK_*) → 内置默认
+# 环境变量兜底是刻意保留的:老用法(setx LLM_API_KEY=…)一行都不用改。
+ENV_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com").rstrip("/")
+ENV_API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("DEEPSEEK_API_KEY", "")
+ENV_MODEL = os.environ.get("LLM_MODEL") or os.environ.get("DEEPSEEK_MODEL", "deepseek-flash")  # 漫游要快和便宜,flash 够用
+ENV_MAX_TOKENS = int(os.environ.get("ROAM_MAX_TOKENS", "8000"))  # 思维链+正文共用,大词(如微软)思考就得上千 token
+
+# 兼容旧名:batch.py 等仍 `from app import MODEL/MAX_TOKENS`,保留模块级常量(取环境变量口径)
+API_URL = ENV_BASE_URL + "/chat/completions"
+API_KEY = ENV_API_KEY
+MODEL = ENV_MODEL
+MAX_TOKENS = ENV_MAX_TOKENS
+
+
+def resolve_api_config(s: dict | None = None) -> dict:
+    """算出本次请求真正要用的 (base_url, api_key, model, max_tokens)。
+    ⚙设置里配了就优先用,没配的字段各自回落环境变量——支持"只换个模型名"这种部分覆盖。"""
+    if s is None:
+        s = load_settings()
+    a = s.get("api") or {}
+    base_url = (a.get("base_url") or "").strip().rstrip("/") or ENV_BASE_URL
+    api_key = (a.get("key") or "").strip() or ENV_API_KEY
+    model = (a.get("model") or "").strip() or ENV_MODEL
+    try:
+        max_tokens = int(float(a.get("max_tokens"))) if (a.get("max_tokens") or "").strip() else ENV_MAX_TOKENS
+    except (TypeError, ValueError):
+        max_tokens = ENV_MAX_TOKENS
+    key_from = "settings" if (a.get("key") or "").strip() else ("env" if ENV_API_KEY else "none")
+    return {"base_url": base_url, "api_key": api_key, "model": model,
+            "max_tokens": max_tokens, "key_from": key_from}
+
+
+def missing_key_hint(cfg: dict) -> str | None:
+    """需要 key 却没配时给出提示文本;不需要 key(自建/本地端点)返回 None。"""
+    if cfg["api_key"]:
+        return None
+    if "deepseek.com" in cfg["base_url"] or "openai.com" in cfg["base_url"]:
+        return ("未配置 API Key。请在 ⚙设置 →「模型接口」里填一个,"
+                "或设环境变量 LLM_API_KEY / DEEPSEEK_API_KEY 后重启本程序")
+    return None
 
 DEFAULT_FLAVOR = "半学习半娱乐,科技/商业/历史/人文乱炖,别太正经"
 
@@ -62,13 +99,16 @@ DEEP_SYSTEM_PROMPT = """你是关键词深挖引擎。用户给你一个词,先�
 5. 只输出 JSON,格式:
 {"type":"词的类型","summary":"一句话定位这个词,20字内","dimensions":[{"name":"维度名","items":[{"word":"...","note":"..."}]}]}"""
 
-DETAIL_SYSTEM_PROMPT = """你是词条解释器。用户给的输入可能是一个词、一个短语,也可能是一句描述或说法(例如"某某 2014 年上线,2023 年关闭")。
+DETAIL_SYSTEM_PROMPT = """你是词条解释器。用户给的输入可能是一个词、一个短语,也可能是一句描述或说法。
 - 输入是词或短语:直接解释它是什么、为什么有意思,可带一两个关键事实(时间/人物/数字)
 - 输入是描述或说法:先推断它实际指的是什么(把推断出的名称写进 word 字段),再解释那个东西
 要求:
-1. 解释不超过 150 个汉字,宁可砍细节
-2. 面向好奇但没背景的普通人,信息密度高,不要营销腔,不要堆感叹号
-3. 只输出 JSON:{"word":"...","detail":"150字以内的解释"}"""
+1. 解释控制在 150 个汉字以内,宁可少讲一个细节也要收得住尾
+2. **必须是一段完整的话,最后一个字后面必须是句号、问号或叹号**(。!?)
+3. 不要引述真实人物说过的话,不要把任何句子用引号括起来当引文;需要提到当事人的反应时,
+   用转述写法(如"当事人随后作出回应""引发当事人回应"),别写成"某某说:\"……\""
+4. 面向好奇但没背景的普通人,信息密度高,不要营销腔,不要堆感叹号
+5. 只输出 JSON:{"word":"...","detail":"完整且以句号收尾的解释"}"""
 
 ASK_SYSTEM_PROMPT = """你是追问助手。用户正在阅读关于某个关键词的介绍,对里面不熟悉的说法产生了疑问。
 基于给出的上下文回答用户的问题,要求:
@@ -104,15 +144,17 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2,
          extra_msgs: list | None = None) -> tuple:
     """发一次对话请求,返回 (解析后的 JSON, 思维链思考过程)。
     extra_msgs:多轮对话的中间消息(user/assistant 交替,最后一条应是 assistant),插在系统提示与本次提问之间。
-    网络抖动或模型偶发写崩 JSON 时自动重试一次——温度高就是掷骰子,重掷一次通常就好。"""
+    网络抖动或模型偶发写崩 JSON 时自动重试一次——温度高就是掷骰子,重掷一次通常就好。
+    端点/key/模型每次调用时从 ⚙设置解析(环境变量兜底),所以改完设置不必重启。"""
+    cfg = resolve_api_config()
     last_err: Exception = ValueError("未执行")
     for attempt in range(retries):
         try:
             resp = requests.post(
-                API_URL,
-                headers={"Authorization": f"Bearer {API_KEY}"},
+                cfg["base_url"] + "/chat/completions",
+                headers={"Authorization": f"Bearer {cfg['api_key']}"},
                 json={
-                    "model": MODEL,
+                    "model": cfg["model"],
                     "messages": [
                         {"role": "system", "content": system},
                         *(extra_msgs or []),
@@ -120,7 +162,7 @@ def chat(system: str, user_msg: str, temperature: float = 1.1, retries: int = 2,
                     ],
                     "response_format": {"type": "json_object"},
                     "temperature": temperature,
-                    "max_tokens": MAX_TOKENS,  # 思维链+正文共用;按实际用量计费,上限抬高不多花钱
+                    "max_tokens": cfg["max_tokens"],  # 思维链+正文共用;按实际用量计费,上限抬高不多花钱
                 },
                 timeout=90,
             )
@@ -175,7 +217,7 @@ def _validate(data: dict, mode: str, word: str, reasoning: str) -> None:
         if not data["detail"].rstrip().endswith(END_PUNCT):
             # 句子结尾不是句号类标点:多半是话说一半(预算截断或模型自己断片)
             log_abnormal("详情疑似腰斩", word, f"结尾:{data['detail'][-60:]!r}")
-            raise ValueError("详情话说一半,重掷一次")
+            raise ValueError("详情话说一半,重掷一次(连失败几次后会被自动补详情跳过,不再重复烧钱)")
 
 
 def build_prompt(word: str, flavor: str, visited: list[str], mode: str = "basic", ctx: str = "") -> tuple:
@@ -197,6 +239,32 @@ def build_prompt(word: str, flavor: str, visited: list[str], mode: str = "basic"
     return system, user_msg, temperature
 
 
+_TAIL_REFUSAL = re.compile(r'[说称道喊问叹讲答][:：]?\s*["“「『]\s*$')
+
+
+def _repair(data: dict) -> bool:
+    """修模型的一种"假收尾":正文断在引号里,它却把 JSON 正常闭合了。
+
+    实测(2026-10-04,mimo-v2.6-flash,AI孙燕姿)失败率 5/6,finish_reason=stop 却有 5~6 个空白,
+    典型结果:…她本人回应说" + 结尾 } —— 模型不愿意把"当事人说了什么"写完,就地把引号收了。
+    这不是预算截断(重掷也一样),而是句法上真断了:结尾那半句没有谓语。
+    对这种尾巴只做一件事:把没闭合的引语整段砍掉,补句号。砍不动就返回 False,照旧重掷。
+    """
+    det = (data.get("detail") or "").rstrip()
+    if not det:
+        return False
+    cut = _TAIL_REFUSAL.search(det)
+    if not cut:
+        return False
+    head = det[:cut.start()].rstrip(' ,，、;；:：')
+    # 守卫看"留下的正文够不够解释一个词",而不是"砍掉了多少":一句 30 字的解释把末尾
+    # 8 个字的口水话(连她本人回应说")砍掉,是正常的,不该因此放弃抢救。
+    if len(head) < 30:
+        return False
+    data["detail"] = head + "。"
+    return True
+
+
 def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ctx: str = "") -> dict:
     """调 DeepSeek 生成扩展词。mode=basic 普通漫游,mode=deep 按类型深挖。
     ctx:输入所在的介绍片段,句式输入推断指向时用。
@@ -206,6 +274,8 @@ def call_llm(word: str, flavor: str, visited: list[str], mode: str = "basic", ct
     last_err: Exception = ValueError("未执行")
     for _attempt in range(2):
         data, reasoning = chat(system, user_msg, temperature=temperature)
+        if mode == "detail" and _repair(data):
+            log_abnormal("详情断在引号里(已抢救)", word, f"砍掉前:{data.get('detail')!r}")
         try:
             _validate(data, mode, word, reasoning)
             return data

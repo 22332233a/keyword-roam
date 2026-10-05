@@ -5,6 +5,12 @@
   <meta charset="utf-8">
   <title>关键词漫游器</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12141a">
+  <meta name="description" content="给一个词,沿上级/下级/相邻词一路逛下去,顺手去 B 站看视频。">
+  <!-- PWA:可安装成独立桌面应用(界面外壳离线可用;/api/* 始终走网络) -->
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
@@ -93,6 +99,37 @@
         </div>
       </div>
       <div class="set-group">
+        <label>自动补详情<span class="set-note">漫游出来后,后台顺手把「下级+相邻」的详情也生成掉——你接着点任意一个,右栏直接有内容。代价:一轮约 8~14 条请求(一毛上下);总生成不出来的词连续失败 3 次后就跳过,不再重复花钱</span></label>
+        <div class="seg" id="seg-auto-detail">
+          <span data-v="off" onclick="setAutoDetail(this)">关</span>
+          <span data-v="smart" onclick="setAutoDetail(this)">智能(下级+相邻)</span>
+          <span data-v="all" onclick="setAutoDetail(this)">全部(含上级)</span>
+        </div>
+      </div>
+      <div class="set-group">
+        <label>模型接口<span class="set-note">端点/key/模型。留空则回落到环境变量(LLM_*/DEEPSEEK_*),老用法不受影响;改完即生效,不用重启</span></label>
+        <div class="set-row">
+          <input id="api-base" placeholder="BASE_URL,如 https://api.deepseek.com" oninput="apiDraft('base_url', this.value)">
+        </div>
+        <div class="set-row">
+          <input id="api-key" type="password" placeholder="API Key(sk-…)" oninput="apiDraft('key', this.value)">
+          <button onclick="clearApiKey()" title="清除已保存的 key">清空</button>
+        </div>
+        <div class="set-row">
+          <input id="api-model" placeholder="模型名" oninput="apiDraft('model', this.value)" list="api-model-list">
+          <datalist id="api-model-list"></datalist>
+        </div>
+        <div class="set-row">
+          <input id="api-max-tokens" placeholder="max_tokens(默认 8000)" oninput="apiDraft('max_tokens', this.value)" style="width:150px">
+          <input id="api-temperature" placeholder="温度(留空=按档位)" oninput="apiDraft('temperature', this.value)" style="width:150px">
+        </div>
+        <div class="set-row">
+          <button onclick="testConn()" id="api-test-btn">测试连接</button>
+          <span class="set-note" id="api-key-note"></span>
+        </div>
+        <div id="api-result" class="api-result" hidden></div>
+      </div>
+      <div class="set-group">
         <label>黑名单<span class="set-note">永不推荐的词(卡片 🚫 一键拉黑,或手动加);生成时拼进提示词,可随时解禁</span></label>
         <div id="bl-chips"></div>
         <div class="set-row">
@@ -139,8 +176,22 @@
   <script src="/static/js/map.js"></script>
   <script src="/static/js/footprint.js"></script>
   <script src="/static/js/selection.js"></script>
+  <script src="/static/js/autodetail.js"></script>
   <script src="/static/js/main.js"></script>
   <script src="/static/js/settings.js"></script>
+
+  <script>
+    /* PWA:注册 service worker,让浏览器把本页当作"可安装的应用"。
+       只在安全上下文生效(localhost / https)。注册失败不影响任何功能——
+       这个应用本来就是个普通网页,SW 只是给它加一层"能装到桌面 + 外壳离线"。 */
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' ||
+        ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname))) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(err => console.warn('[PWA] service worker 注册失败(不影响使用):', err));
+      });
+    }
+  </script>
 </body>
 
 </html>

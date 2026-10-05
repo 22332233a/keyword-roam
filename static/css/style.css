@@ -339,6 +339,25 @@
 
     .r-toolbar {
       white-space: normal;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* 没有漫游树时的空态(只有深挖 / 还没漫游过):给一句解释 + 一个出口,别只丢报错 */
+    .r-empty {
+      white-space: normal;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      text-align: left;
+      padding: 10px 2px;
+    }
+
+    .r-empty .map-note {
+      flex: 1 1 320px;
     }
 
     .r-grid h4 {
@@ -630,6 +649,33 @@
 
   .set-row { display: flex; gap: 6px; }
   .set-row input { flex: 1; }
+
+  /* ===== 模型接口:连接测试结果。四态用色区分:ok 绿 / warn 琥珀 / bad 红 / pending 灰 ===== */
+  .api-result {
+    font-size: 12px;
+    font-family: Consolas, "Courier New", monospace;
+    line-height: 1.65;
+    padding: 8px 10px;
+    border-radius: 6px;
+    word-break: break-all;
+    background: #161920;
+    border-left: 3px solid #3a3f4d;
+    color: #8a8f9c;
+  }
+  .api-result.ok   { border-left-color: #5da97a; color: #a9c9b4; }
+  .api-result.warn { border-left-color: #d6a24a; color: #d8bd8a; }
+  .api-result.bad  { border-left-color: #e06c75; color: #dba0a5; }
+  .api-result.pending { border-left-color: #4a7dff; color: #8a8f9c; }
+  .api-result .api-err { color: #ff9aa2; }
+  .api-result .api-hint {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed #2a2e3a;
+    color: #6a6f7c;
+    font-family: "Microsoft YaHei", system-ui, sans-serif;
+  }
+  #api-max-tokens, #api-temperature { flex: 0 0 128px; width: 128px; }
+  #api-key-note { margin-left: 4px; }
 
   .seg { display: flex; gap: 6px; }
 

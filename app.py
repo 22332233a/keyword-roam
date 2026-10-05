@@ -17,39 +17,44 @@ import os
 import time
 
 import requests
-from flask import Flask, Response, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request, send_from_directory
 
 from store import (
+    AUTO_DETAIL_MODES,
     BASE_DIR,
+    DETAIL_FAIL_LIMIT,
     DETAIL_LEN_CHARS,
     TEMP_ROAM,
+    api_snapshot,
+    clear_detail_fail,
+    detail_fail_count,
     load_asks,
     load_cache,
     load_notes,
     load_settings,
     log_abnormal,
+    merge_api_settings,
     merge_into_cache,
+    record_detail_fail,
     save_asks,
     save_cache,
     save_notes,
     save_settings,
 )
 from llm import (
-    API_KEY,
-    API_URL,
     ASK_SYSTEM_PROMPT,
     CHAT_SYSTEM_PROMPT,
     DEFAULT_FLAVOR,
     END_PUNCT,
-    MAX_TOKENS,
-    MODEL,
     # 以下 build_prompt/_validate/parse_llm_json 路由不用,专为 batch.py 的
     # `from app import ...` 老入口保留——两条生成路的兼容导入入口不许断
     _validate,
     build_prompt,
     call_llm,
     chat,
+    missing_key_hint,
     parse_llm_json,
+    resolve_api_config,
 )
 
 app = Flask(__name__)
@@ -60,11 +65,22 @@ def index():
     return render_template("index.html", default_flavor=DEFAULT_FLAVOR)
 
 
+@app.route("/sw.js")
+def service_worker():
+    """PWA 的 service worker 必须从根路径提供,否则作用域被限制在 /static/,
+    而本应用的 start_url 是 /。Service-Worker-Allowed 头显式放开到整站。"""
+    resp = send_from_directory(BASE_DIR / "static", "sw.js", mimetype="application/javascript")
+    resp.headers["Service-Worker-Allowed"] = "/"
+    resp.headers["Cache-Control"] = "no-cache"   # 让浏览器每次核对 SW 是否更新
+    return resp
+
+
 @app.route("/api/expand")
 def expand():
-    if not API_KEY and "deepseek.com" in API_URL:
-        # 自建/本地端点通常不需要 key,只在走 DeepSeek 官方时强制
-        return jsonify({"error": "未设置 DEEPSEEK_API_KEY 环境变量,设置后重启本程序"}), 500
+    _missing = missing_key_hint(resolve_api_config())
+    if _missing:
+        # 自建/本地端点通常不需要 key,只在官方端点强制;端点/key/模型来自 ⚙设置或环境变量
+        return jsonify({"error": _missing}), 500
 
     word = request.args.get("word", "").strip()
     if not word:
@@ -81,28 +97,56 @@ def expand():
     cache_only = request.args.get("cache_only") == "1"  # 🧭漫游思考:只要缓存,缓存没有就不生成(零花费)
 
     cache = load_cache()
-    entry = cache.get(word)
+    entry = cache.get(word) or {}
+    word_exists = bool(entry)      # 注意别写成 entry is not None:entry 上面兜了 {} ,永远不是 None
 
     # 缓存命中:漫游看词条本身,深挖和详情看词条里嵌的对应字段(force=重写时跳过)
-    if entry is not None and not force:
+    if not force:
+        hit = None
         if mode == "basic" and entry.get("parents"):
-            return jsonify({"cached": True, "data": entry})
-        if mode == "deep" and entry.get("deep"):
-            return jsonify({"cached": True, "data": entry["deep"]})
-        if mode == "detail" and entry.get("detail"):
-            return jsonify({"cached": True, "data": {"word": word, "detail": entry["detail"]}})
+            hit = entry
+        elif mode == "deep" and entry.get("deep"):
+            hit = entry["deep"]
+        elif mode == "detail" and entry.get("detail"):
+            hit = {"word": word, "detail": entry["detail"]}
+        if hit is not None:
+            if entry.get("failed") and clear_detail_fail(cache, word):
+                save_cache(cache)   # 数据已经生成出来了 → 把之前的失败记录清掉
+            return jsonify({"cached": True, "data": hit})
+
+    # 详情有个已知的恶性循环:死活生成不出的词会被"自动补详情"每次重新排队,白花钱且永远好不了。
+    # 连续失败到上限就不再自动打,手动点详情/🔄重写(force)照旧可以再试。
+    if mode == "detail" and not force and detail_fail_count(entry) >= DETAIL_FAIL_LIMIT:
+        n = detail_fail_count(entry)
+        return jsonify({"error": f"这个词的详情已连续 {n} 次生成失败(模型总说不完整),"
+                                 f"自动补详情已跳过它;手动点 📖 或 🔄重写可以再试",
+                        "skipped": True, "failed_count": n}), 409
 
     try:
         if cache_only:
-            return jsonify({"error": "没有可复用的漫游缓存(这个词还没漫游过,或旧缓存没存思维链)"}), 404
+            # 目录里没有漫游树(可能是"只有深挖",也可能压根没漫游过)。
+            # 把这两件事分开告诉前端:前端才知道该不该挂「补深挖词详情」那个入口——
+            # 深挖-only 的词照样有一整棵深挖树可以补详情,不该被当成"什么都没有"。
+            return jsonify({
+                "error": "没有可复用的漫游缓存(这个词还没漫游过,或旧缓存没存思维链)",
+                "no_roam": True,
+                "word_exists": word_exists,
+                "has_deep": bool(entry.get("deep")),
+            }), 404
         ctx = request.args.get("ctx", "").strip()[:600]
         data = call_llm(word, flavor, list(cache.keys()), mode=mode, ctx=ctx)
     except requests.RequestException as e:
+        # 网络/端点问题不算"这个词不行",不记失败(换好 key 就该能跑)
         log_abnormal("API请求失败", word, str(e)[:200])
         return jsonify({"error": f"API 请求失败:{e}"}), 502
     except (json.JSONDecodeError, AssertionError, ValueError) as e:
+        # 模型出来了但不过关(腰斩/超长/JSON 崩)→ 记账,连续几次就不再自动重试
         log_abnormal("生成失败(重试耗尽或校验不过)", word, str(e)[:200])
-        return jsonify({"error": f"模型返回解析失败:{e}"}), 502
+        n = record_detail_fail(cache, word) if mode == "detail" else 0
+        if n:
+            save_cache(cache)
+        extra = f"(第 {n} 次失败,再 {max(0, DETAIL_FAIL_LIMIT - n)} 次自动补详情就不碰它了)" if n else ""
+        return jsonify({"error": f"模型返回解析失败:{e}{extra}"}), 502
 
     merge_into_cache(cache, word, mode, data, flavor)  # 合并语义与批量回填共用
     save_cache(cache)
@@ -125,8 +169,9 @@ def ask():
     if key in asks:
         return jsonify({"cached": True, "data": asks[key]})
 
-    if not API_KEY and "deepseek.com" in API_URL:
-        return jsonify({"error": "未设置 DEEPSEEK_API_KEY 环境变量,设置后重启本程序"}), 500
+    _missing = missing_key_hint(resolve_api_config())
+    if _missing:
+        return jsonify({"error": _missing}), 500
 
     user_msg = f"中心词:{word or '(无)'}\n正在阅读的介绍:{context or '(无)'}\n我的问题:{question}"
     last_err: Exception = ValueError("未执行")
@@ -159,8 +204,9 @@ def chat_api():
     """底部对话条:绑在当前词上的多轮追问。
     首轮吃 asks 单轮缓存(划词追问问过同样的就不花钱);对话本身不持久化(会话级);
     上下文带最近 6 轮,回答封顶 300 字,超长自动重掷一次。"""
-    if not API_KEY and "deepseek.com" in API_URL:
-        return jsonify({"error": "未设置 DEEPSEEK_API_KEY 环境变量,设置后重启本程序"}), 500
+    _missing = missing_key_hint(resolve_api_config())
+    if _missing:
+        return jsonify({"error": _missing}), 500
 
     body = request.get_json(silent=True) or {}
     word = str(body.get("word") or "").strip()[:30]
@@ -241,6 +287,7 @@ def tree_words():
         return jsonify({"error": "缺少 word 参数"}), 400
     cache = load_cache()
     d = cache.get(word) or {}
+    black = set(load_settings()["blacklist"])
     seen, items = set(), []
 
     def add(w: str, grp: str) -> None:
@@ -248,10 +295,15 @@ def tree_words():
         if not w or w in seen:
             return
         seen.add(w)
+        ent = cache.get(w) or {}
+        fails = detail_fail_count(ent)
         items.append({
             "word": w, "grp": grp,
-            "has_detail": bool((cache.get(w) or {}).get("detail")),
-            "black": w in set(load_settings()["blacklist"]),
+            "has_detail": bool(ent.get("detail")),
+            "black": w in black,
+            # 连续失败到上限:自动补详情不再碰它(前端也据此跳过,别白花钱)
+            "skipped": not ent.get("detail") and fails >= DETAIL_FAIL_LIMIT,
+            "failed_count": fails,
         })
 
     for grp in ("parents", "children", "similar"):
@@ -261,6 +313,54 @@ def tree_words():
         for it in dim.get("items") or []:
             add(it.get("word"), "deep")
     return jsonify({"count": len(items), "items": items})
+
+
+@app.route("/api/deep-words")
+def deep_words():
+    """🔍补深挖词详情:把「深挖树」里还缺详情的词列出来。
+
+    不带 word → 扫遍缓存里所有有深挖的词(挑词用,响应只含缺的那些,通常十几个);
+    带 word   → 只扫这一棵树的深挖维度。
+
+    注意:前端按钮走的是 /api/tree-words(它把漫游树和深挖树一起给出来,好支持
+    「整树补详情 / 只补深挖词」两种口径)。这个接口是同一口径的"只挑深挖词"精简版,
+    两边挑出的词经比对完全一致,给批量脚本用。
+    """
+    word = request.args.get("word", "").strip()
+    cache = load_cache()
+    black = set(load_settings()["blacklist"])
+
+    if word:
+        trees = [word] if (cache.get(word) or {}).get("deep") else []
+    else:
+        trees = [w for w, d in cache.items() if d.get("deep")]
+
+    refs, need, seen, skipped = set(), [], set(), 0
+    for t in trees:
+        deep = (cache.get(t) or {}).get("deep") or {}
+        for dim in deep.get("dimensions") or []:
+            for it in dim.get("items") or []:
+                nw = str((it or {}).get("word") or "").strip()
+                if not nw:
+                    continue
+                refs.add(nw)
+                ent = cache.get(nw) or {}
+                if ent.get("detail") or nw in black or nw in seen:
+                    continue
+                seen.add(nw)
+                if detail_fail_count(ent) >= DETAIL_FAIL_LIMIT:
+                    skipped += 1        # 反复生成不出来的词,不进清单(前端另有"重试"出口)
+                    continue
+                need.append(nw)
+
+    return jsonify({
+        "scope": word or "(全部深挖树)",
+        "trees": len(trees),
+        "refs": len(refs),
+        "count": len(need),
+        "skipped": skipped,
+        "missing": need,
+    })
 
 
 @app.route("/api/export")
@@ -344,9 +444,12 @@ def export_data():
 @app.route("/api/settings", methods=["GET", "POST"])
 def settings_api():
     """⚙设置面板读写。即改即生效(下一次生成起),缓存里的旧数据不动。
-    POST 部分更新:只校验并落盘传来的键,没传的保持原样。"""
+    POST 部分更新:只校验并落盘传来的键,没传的保持原样。
+    api.key 特殊:GET 永不回原文(只回 has_key + 掩码预览);POST 空串=别动。"""
     if request.method == "GET":
-        return jsonify(load_settings())
+        s = load_settings()
+        s["api"] = api_snapshot(s)
+        return jsonify(s)
     body = request.get_json(silent=True) or {}
     s = load_settings()
     if "detail_len" in body:
@@ -357,6 +460,10 @@ def settings_api():
         if body["temp_style"] not in TEMP_ROAM:
             return jsonify({"error": "temp_style 只能是 稳/标准/抽风"}), 400
         s["temp_style"] = body["temp_style"]
+    if "auto_detail" in body:
+        if body["auto_detail"] not in AUTO_DETAIL_MODES:
+            return jsonify({"error": "auto_detail 只能是 off/smart/all"}), 400
+        s["auto_detail"] = body["auto_detail"]
     if "flavors" in body:
         if not isinstance(body["flavors"], list):
             return jsonify({"error": "flavors 要是字符串列表"}), 400
@@ -365,8 +472,105 @@ def settings_api():
         if not isinstance(body["blacklist"], list):
             return jsonify({"error": "blacklist 要是字符串列表"}), 400
         s["blacklist"] = [str(w).strip()[:30] for w in body["blacklist"] if str(w).strip()][:200]
+    if "api" in body:
+        if not isinstance(body["api"], dict):
+            return jsonify({"error": "api 要是对象"}), 400
+        s["api"] = merge_api_settings(s.get("api"), body["api"])
     save_settings(s)
-    return jsonify(s)
+    resp = dict(s)
+    resp["api"] = api_snapshot(s)
+    return jsonify(resp)
+
+
+@app.route("/api/test-conn", methods=["POST"])
+def test_conn():
+    """模型接口连通性诊断:用当前(或传入的)配置打一次 /models,把失败原因分类。
+    这个接口跑在服务端,所以它失败=端点/key/网络的问题;若这里通了而浏览器版不通,
+    那就是 CORS(浏览器直连被拦)——所以响应里专门给一句 browser_hint。"""
+    body = request.get_json(silent=True) or {}
+    s = load_settings()
+    if isinstance(body.get("api"), dict):
+        s = dict(s)
+        s["api"] = merge_api_settings(s.get("api"), body["api"])
+    cfg = resolve_api_config(s)
+    base = cfg["base_url"]
+    hint = missing_key_hint(cfg)
+
+    started = time.time()
+    models, status_code, err = None, None, None
+    try:
+        r = requests.get(f"{base}/models",
+                         headers={"Authorization": f"Bearer {cfg['api_key']}"}, timeout=15)
+        status_code = r.status_code
+        if r.status_code == 200:
+            try:
+                data = r.json().get("data") or []
+                models = [str((m or {}).get("id") or "") for m in data if (m or {}).get("id")]
+            except (ValueError, AttributeError):
+                models = []
+        else:
+            err = (r.text or "")[:300]
+    except Exception as e:
+        err = f"{type(e).__name__}: {e}"
+
+    latency = int((time.time() - started) * 1000)
+    reason = None
+    if models is not None:
+        pass                                   # 通了
+    elif hint:
+        reason = "missing_key"
+    elif err and "SSLError" in err:
+        reason = "tls"
+    elif err and "ConnectionError" in err:
+        reason = "connection"                  # 域名不存在 / 拒绝连接 / 代理
+    elif err and "Timeout" in err:
+        reason = "timeout"
+    elif status_code == 401:
+        reason = "auth"
+    elif status_code == 403:
+        reason = "forbidden"
+    elif status_code == 404:
+        reason = "not_found"
+    elif status_code == 429:
+        reason = "rate_limit"
+    elif status_code and status_code >= 500:
+        reason = "server"
+    else:
+        reason = "unknown"
+
+    model_listed = None
+    if models is not None and cfg["model"]:
+        model_listed = cfg["model"] in models
+
+    hints = {
+        "missing_key": "还没填 API Key。本地端点(如 Ollama)一般不用填。",
+        "tls": "TLS/证书握手失败:检查 BASE_URL 是不是 https、或公司代理拦了证书。",
+        "connection": f"连不上 {base} —— 域名/端口写错、断网,或该端点不对外。",
+        "timeout": "连接超时:端点不可达,或网络太慢。",
+        "auth": "Key 无效或已过期(401)。确认复制完整、没夹空格。",
+        "forbidden": "被拒绝(403):该 key 没有访问此端点的权限,或来源被限制。",
+        "not_found": "路径不对(404):BASE_URL 通常要到 /v1 这一层,检查末尾路径。",
+        "rate_limit": "限流(429):稍等再试,或降低并发。",
+        "server": f"端点报错({status_code}):对方服务的问题,不是你的配置。",
+        "unknown": "没识别出具体原因,把下面的原始信息发给我。",
+    }
+    result = {
+        "ok": models is not None,
+        "reason": reason,
+        "hint": hints.get(reason),
+        "raw_error": (err or "")[:300],
+        "status_code": status_code,
+        "latency_ms": latency,
+        "base_url": base,
+        "model": cfg["model"],
+        "max_tokens": cfg["max_tokens"],
+        "key_from": cfg["key_from"],
+        "models": (models or [])[:200],
+        "model_listed": model_listed,
+        "browser_hint": ("浏览器版还要看端点的 CORS:若 API 能通但网页版连不上,"
+                         "就是这个端点不允许跨域,换端点或改用桌面版。"),
+    }
+    return jsonify(result)
 
 
 @app.route("/api/graph")
@@ -406,7 +610,8 @@ def graph():
 
 @app.route("/api/cache")
 def cache_info():
-    """足迹:已漫游过的词,按最近漫游排序,带功能标记(前端分类筛选用)。"""
+    """足迹:已漫游过的词,按最近漫游排序,带功能标记(前端分类筛选用)。
+    failed 一起回:前端据此把"反复生成不出详情"的词直接排掉,连那一次 409 都不用发。"""
     cache = load_cache()
     words = []
     for w, d in cache.items():
@@ -417,12 +622,14 @@ def cache_info():
             feats.append("deep")
         if d.get("detail"):
             feats.append("detail")
-        words.append({"word": w, "time": d.get("time") or 0, "feats": feats})
+        words.append({"word": w, "time": d.get("time") or 0, "feats": feats,
+                      "failed": detail_fail_count(d)})
     words.sort(key=lambda x: x["time"], reverse=True)
     return jsonify({"count": len(words), "words": words})
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("ROAM_PORT", "8765"))
-    print(f"关键词漫游器:http://127.0.0.1:{port}   (模型:{MODEL})")
+    _cfg = resolve_api_config()
+    print(f"关键词漫游器:http://127.0.0.1:{port}   (模型:{_cfg['model']}  端点:{_cfg['base_url']}  key来自:{_cfg['key_from']})")
     app.run(host="127.0.0.1", port=port, debug=False)

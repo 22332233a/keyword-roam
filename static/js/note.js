@@ -42,10 +42,14 @@ async function saveNote() {
   }
 }
 
-/* 输入框是静态 DOM,脚本加载时直接挂防抖自动保存 */
+/* 输入框是静态 DOM,脚本加载时直接挂防抖自动保存;没选词时笔记无处可绑,只提示不发请求 */
 document.getElementById("note-input").addEventListener("input", () => {
   clearTimeout(noteSaveTimer);
   const st = document.getElementById("note-status");
+  if (!currentWord) {
+    if (st) st.textContent = "先选一个词——笔记是绑在词上的";
+    return;
+  }
   if (st) st.textContent = "…";
   noteSaveTimer = setTimeout(saveNote, 600);   // 停手半秒自动存,不打断写字
 });

@@ -3,8 +3,8 @@ let chipsExpanded = false;   // 足迹默认折叠到两行
 const DAY = 86400000;
 /* 时间分组的桶界(本地零点起算):今天/最近三天/一周内/更早;无时间的旧条目落"更早" */
 function timeBucket(t) {
-  const start = new Date(); start.setHours(0, 0, 0, 0);
-  start = start.getTime();
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const start = midnight.getTime();
   if (t >= start) return "今天";
   if (t >= start - 2 * DAY) return "最近三天";
   if (t >= start - 6 * DAY) return "一周内";

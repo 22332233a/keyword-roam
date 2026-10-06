@@ -282,6 +282,23 @@ console.log('\n=== autodetail.js:统一入队出口 ===');
   eq('total 只算被挡下的', stateOf(env, 'autoProgress.total'), 2);
 }
 
+console.log('\n=== footprint.js:时间分桶 ===');
+{
+  /* timeBucket 是纯函数,footprint.js 顶层又不碰 DOM,裸上下文就能跑 */
+  const ctx = vm.createContext({ document: { getElementById: () => null } });
+  vm.runInContext(read('footprint.js'), ctx, { filename: 'footprint.js' });
+  const at = expr => vm.runInContext(expr, ctx);
+  const DAY = 86400000;
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const startMs = midnight.getTime();
+  eq('今天零点整 → 今天', at(`timeBucket(${startMs})`), '今天');
+  eq('两小时前 → 今天', at(`timeBucket(${Date.now() - 2 * 3600 * 1000})`), '今天');
+  eq('昨天半夜 → 最近三天', at(`timeBucket(${startMs - 0.5 * DAY})`), '最近三天');
+  eq('四天前 → 一周内', at(`timeBucket(${startMs - 4 * DAY})`), '一周内');
+  eq('一个月前 → 更早', at(`timeBucket(${startMs - 30 * DAY})`), '更早');
+  eq('无时间戳(0) → 更早', at('timeBucket(0)'), '更早');
+}
+
 console.log(`\n===== 前端测试:通过 ${passed} / 失败 ${failures.length} =====`);
 if (failures.length) {
   console.log('失败项:');

@@ -24,3 +24,5 @@ data/*.png
 # Qoder/ZCode 本机工具产物(计划文件 + 工具自带的忽略配置,不进版本库)
 .zcode/
 .zcodeignore
+# MCP 包装器的本机虚拟环境
+mcp_server/.venv/

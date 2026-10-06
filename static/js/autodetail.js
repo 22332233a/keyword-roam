@@ -17,9 +17,8 @@
  */
 
 let autoQueue = [];                 // 待补的词,先进先出
-let autoQueued = new Set();         // 已入队(含跑完的),用来去重
+let autoQueued = new Set();         // 已入队(含跑完的),会话级去重:同词一轮会话最多排一次
 let autoRunning = false;            // 串行闸门
-let autoLastWord = null;            // 上一次入队的中心词,换词就重置去重表
 let autoFail = new Map();           // word -> 本页连续失败次数(队列退避;刷新即清,后端还有一份持久账)
 // 进度口径:done = 真拿到详情的条数;total = 本轮排过的条数;
 // failSet = 这一轮"没拿到详情"的词(含开局就知道生成不出来、直接跳过的)。
@@ -33,11 +32,6 @@ const AUTO_FAIL_LIMIT = 3;          // 与后端 store.DETAIL_FAIL_LIMIT 对齐:
 function autoDetailFromRoam(d) {
   const mode = (setDraft && setDraft.auto_detail) || "smart";
   if (mode === "off" || !d) return;
-
-  if (currentWord !== autoLastWord) {   // 换词 → 去重表重置(旧队列仍在跑,只是不再记它)
-    autoLastWord = currentWord;
-    autoQueued = new Set();
-  }
 
   const groups = ["children", "similar"];
   if (mode === "all") groups.unshift("parents");   // all 档把上级也补上

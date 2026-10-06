@@ -56,9 +56,9 @@ function makeEnv({ progressEl = { textContent: '', title: '', onclick: null } } 
   });
   vm.runInContext(state, context, { filename: 'state.js' });
   vm.runInContext(autodetail, context, { filename: 'autodetail.js' });
-  // 每条用例都从干净状态起步:不重置 autoLastWord 的话,上一条用例攒下的 autoQueued
-  // 会让这一条的词被当成"已经排过"而跳过 —— 结果是测试自己在骗自己。
-  vm.runInContext('autoLastWord = null; autoQueued = new Set(); autoQueue.length = 0;', context);
+  // 每条用例都从干净状态起步:autoQueued 是会话级去重,不重置的话,上一条用例攒下的
+  // autoQueued 会让这一条的词被当成"已经排过"而跳过 —— 结果是测试自己在骗自己。
+  vm.runInContext('autoQueued = new Set(); autoQueue.length = 0;', context);
   return { context, progressEl, els, document };
 }
 
@@ -167,7 +167,7 @@ console.log('\n=== autodetail.js:入队判据 ===');
   vm.runInContext('currentWord = "另一个词"', env.context);
   await run(env, 'autoDetailFromRoam({children:[{word:"下级A"}],similar:[]})');
   await drain(env);
-  eq('换词后同一个词可以再排一次', fetchLog(env), ['下级A', '下级A']);
+  eq('换词后同一个词不再重复入队(会话级去重,进度数字不再虚胖)', fetchLog(env), ['下级A']);
 }
 
 {

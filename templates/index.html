@@ -26,15 +26,19 @@
   <div id="status"></div>
 
   <div id="history">
-    <h3 title="点词优先吃缓存:按词已有数据打开——筛选分类下点=按分类跳,全部页按 深挖>漫游>详情,没有数据的按当前页模式生成。词后的色点:绿=漫游 紫=深挖 蓝=详情">
-      足迹(自动保存,重启不丢)<span id="chip-count"></span></h3>
-    <div style="margin-bottom:8px">
+    <h3 id="hist-head" title="点词优先吃缓存:按词已有数据打开——筛选分类下点=按分类跳,全部页按 深挖>漫游>详情,没有数据的按当前页模式生成。词后的色点:绿=漫游 紫=深挖 蓝=详情">
+      <span>足迹(自动保存,重启不丢)<span id="chip-count"></span></span>
+      <span class="legend">去过方式&ensp;<i class="dot dot-roam"></i> 漫游 <i class="dot dot-deep"></i> 深挖 <i class="dot dot-detail"></i> 详情</span>
+    </h3>
+    <div id="hist-tools">
       <span class="chip ftab active" data-f="all" onclick="setFilter('all')">全部</span>
       <span class="chip ftab" data-f="roam" onclick="setFilter('roam')">🧭 漫游图</span>
       <span class="chip ftab" data-f="deep" onclick="setFilter('deep')">🔍 深挖过</span>
       <span class="chip ftab" data-f="detail" onclick="setFilter('detail')">📖 读过详情</span>
-      <span class="chip ftab stab active" data-s="time" onclick="setSort('time')">最近</span>
-      <span class="chip ftab stab" data-s="name" onclick="setSort('name')">名称</span>
+      <span class="sort-switch" title="足迹排序">
+        <button class="stab active" data-s="time" onclick="setSort('time')">最近</button>
+        <button class="stab" data-s="name" onclick="setSort('name')">名称</button>
+      </span>
       <input id="chip-search" placeholder="筛词,即输即筛…">
     </div>
     <div id="chips-wrap" class="collapsed">
